@@ -1,0 +1,27 @@
+<root>
+    <cpu type="linux">
+        <cmd>
+            top -bn1 | grep "%Cpu(s)" | awk -F'[,% ]+' '{printf "{\"us\": %s, \"sy\": %s, \"id\": %s, \"wa\": %s}", $3, $5, $9, $11}'
+        </cmd>
+        <res from="us" name="us"/>
+        <res from="sy" name="sy"/>
+        <res from="id" name="id"/>
+        <res from="wa" name="wa"/>
+    </cpu>
+    <cpu type="aix">
+        <cmd>
+            topas -i 1 | head -10 | awk '/CPU%/,0 {if(NR==3) printf "{\"us\": %s, \"sy\": %s, \"id\": %s, \"wa\": %s}", $2, $4, $6, $8}'
+        </cmd>
+        <res from="us" name="us"/>
+        <res from="sy" name="sy"/>
+        <res from="id" name="id"/>
+        <res from="wa" name="wa"/>
+    </cpu>
+    <storage>
+        <cmd>
+        <![CDATA[
+            df -h {{path}} | awk 'NR==1{for(i=1;i<=NF;i++)h[i]=$i} NR==2{printf "{"; for(i=1;i<=NF;i++){printf "\""h[i]"\": \""$i"\""; if(i<NF)printf ", "} print "}"}'
+        ]]>
+        </cmd>
+    </storage>
+</root>

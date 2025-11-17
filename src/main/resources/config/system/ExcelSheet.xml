@@ -1,0 +1,38 @@
+<excel>
+    <sheet name="服务器CPU巡检">
+        <table>
+            <title>
+                服务器CPU巡检结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称"/>
+                <cell from="cpu.threshold.us" name="CPU使用率"/>
+                <cell from="cpu.threshold.id" name="CPU空闲率"/>
+                <cell name="111">
+                    <cell from="cpu.threshold.sy" name="11"/>
+                    <cell from="cpu.threshold.wa" name="22"/>
+                </cell>
+            </row>
+        </table>
+    </sheet>
+    <sheet name="服务器内存巡检">
+        <table>
+            <title>
+                服务器物理内存巡检结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称"/>
+                <cell from="memory.threshold.us" name="内存使用率"/>
+            </row>
+        </table>
+        <table>
+            <title>
+                服务器虚拟内存巡检结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称"/>
+                <cell from="memory.threshold.us" name="内存使用率"/>
+            </row>
+        </table>
+    </sheet>
+</excel>

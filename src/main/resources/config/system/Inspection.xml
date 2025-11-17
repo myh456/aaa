@@ -1,0 +1,12 @@
+<root>
+    <server type="linux,aix">
+        <inspection>cpu</inspection>
+        <inspection>memory</inspection>
+        <inspection>storage</inspection>
+        <inspection>ogg</inspection>
+    </server>
+    <database type="oracle,mysql">
+        <inspection>password</inspection>
+        <inspection>tablespace</inspection>
+    </database>
+</root>

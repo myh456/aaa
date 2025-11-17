@@ -1,0 +1,26 @@
+<root>
+    <server name="1" ip="1" port="1" account="1" password="1" os="linux">
+        <cpu>
+            <threshold>
+                <us>1</us>
+                <id>1</id>
+                <sy>5</sy>
+                <wa>5</wa>
+            </threshold>
+        </cpu>
+        <memory id="1"/>
+        <storage>
+            <path>/</path>
+            <threshold>
+                <use>80%</use>
+            </threshold>
+        </storage>
+        <ogg>
+            <path>/opt</path>
+        </ogg>
+    </server>
+    <server name="2" ip="2" port="2" account="2" password="2" os="linux">
+        <character id="1"/>
+    </server>
+    <server name="3" ip="3" port="3" account="3" password="3" os="linux"/>
+</root>

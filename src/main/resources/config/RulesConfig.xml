@@ -1,0 +1,20 @@
+<root>
+    <cpu id="1">
+        <threshold>
+            <us>90</us>
+            <id>80</id>
+        </threshold>
+    </cpu>
+    <cpu id="2">
+        <threshold>
+            <us>95</us>
+            <id>70</id>
+        </threshold>
+    </cpu>
+    <memory id="1">
+        <threshold>60</threshold>
+    </memory>
+    <memory id="2">
+        <threshold>50</threshold>
+    </memory>
+</root>

@@ -1,0 +1,6 @@
+<root>
+    <character id="1">
+        <cpu id="2" />
+        <memory id="1"/>
+    </character>
+</root>

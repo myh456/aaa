@@ -1,0 +1,7 @@
+<root>
+    <ip-encrypt>true</ip-encrypt>
+    <check>
+        <cpu id="2"/>
+        <memory id="1"/>
+    </check>
+</root>
