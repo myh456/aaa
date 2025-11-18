@@ -1,9 +1,9 @@
 <root>
-    <server name="1" ip="1" port="1" account="1" password="1" os="linux">
+    <server name="WSL" ip="127.0.0.1" port="2222" account="myh" password="456456xx" os="linux">
         <character id="1"/>
     </server>
-    <server name="2" ip="2" port="2" account="2" password="2" os="linux">
+    <server name="WSL1" ip="127.0.0.1" port="2222" account="myh" password="456456xx" os="linux">
         <character id="1"/>
     </server>
-    <server name="3" ip="3" port="3" account="3" password="3" os="linux"/>
+    <server name="WSL2" ip="127.0.0.1" port="2222" account="myh" password="456456xx" os="linux"/>
 </root>

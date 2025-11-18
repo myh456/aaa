@@ -1,5 +1,6 @@
 <root>
     <ip-encrypt>true</ip-encrypt>
+    <checker>神州数码</checker>
     <check>
         <cpu id="2"/>
         <memory id="1"/>

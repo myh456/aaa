@@ -1,13 +1,20 @@
 <root>
-    <database name="" ip="" port="" username="" password="">
+    <database name="1" ip="1" port="1" username="1" password="1">
         <instance name=""/>
         <expire/>
         <asm/>
         <tablespace/>
-        <service>
-            <sql type="无缝管让他"/>
-            <sql type=""/>
-        </service>
-
+        <service name="已经和他个人"/>
+        <service name="没有天赋v的"/>
+        <service name="爱好体育合同文本"/>
+    </database>
+    <database name="2" ip="2" port="2" username="2" password="2">
+        <instance name=""/>
+        <expire/>
+        <asm/>
+        <tablespace/>
+        <service name="已经和他个人"/>
+        <service name="没有天赋v的"/>
+        <service name="爱好体育合同文本"/>
     </database>
 </root>

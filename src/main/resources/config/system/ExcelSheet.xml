@@ -6,11 +6,11 @@
             </title>
             <row>
                 <cell from="name" name="服务器名称"/>
-                <cell from="cpu.threshold.us" name="CPU使用率"/>
-                <cell from="cpu.threshold.id" name="CPU空闲率"/>
+                <cell from="us" name="CPU使用率"/>
+                <cell from="id" name="CPU空闲率"/>
                 <cell name="111">
-                    <cell from="cpu.threshold.sy" name="11"/>
-                    <cell from="cpu.threshold.wa" name="22"/>
+                    <cell from="sy" name="11"/>
+                    <cell from="wa" name="22"/>
                 </cell>
             </row>
         </table>
@@ -22,7 +22,7 @@
             </title>
             <row>
                 <cell from="name" name="服务器名称"/>
-                <cell from="memory.threshold.us" name="内存使用率"/>
+                <cell from="us" name="内存使用率"/>
             </row>
         </table>
         <table>
@@ -31,7 +31,7 @@
             </title>
             <row>
                 <cell from="name" name="服务器名称"/>
-                <cell from="memory.threshold.us" name="内存使用率"/>
+                <cell from="us" name="内存使用率"/>
             </row>
         </table>
     </sheet>
@@ -56,9 +56,6 @@
                 <cell from="name" name="应用名称"/>
                 <cell from="url" name="请求地址"/>
                 <cell from="statusCode" name="响应代码"/>
-                <cell from="" name="巡检人"/>
-                <cell from="" name="巡检日期"/>
-                <cell from="" name="巡检时间"/>
             </row>
         </table>
     </sheet>
