@@ -2,7 +2,7 @@
     <cpu id="1">
         <threshold>
             <us>90</us>
-            <id>80</id>
+            <id lower="true">10</id>
         </threshold>
     </cpu>
     <cpu id="2">
@@ -17,4 +17,4 @@
     <memory id="2">
         <threshold>50</threshold>
     </memory>
-</root>
+ </root>

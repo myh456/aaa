@@ -1,6 +1,6 @@
 <excel>
     <sheet name="服务器CPU巡检">
-        <table>
+        <table for="cpu">
             <title>
                 服务器CPU巡检结果
             </title>
@@ -32,6 +32,18 @@
             <row>
                 <cell from="name" name="服务器名称"/>
                 <cell from="memory.threshold.us" name="内存使用率"/>
+            </row>
+        </table>
+    </sheet>
+    <sheet name="111巡检">
+        <table type="123">
+            <title>
+                edfrgthynj
+            </title>
+            <row sequence="true">
+                <cell name="nthrge1"/>
+                <cell name="nthrge2"/>
+                <cell name="nthrge3"/>
             </row>
         </table>
     </sheet>

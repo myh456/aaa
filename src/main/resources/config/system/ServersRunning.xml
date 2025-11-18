@@ -3,10 +3,6 @@
         <cmd>
             top -bn1 | grep "%Cpu(s)" | awk -F'[,% ]+' '{printf "{\"us\": %s, \"sy\": %s, \"id\": %s, \"wa\": %s}", $3, $5, $9, $11}'
         </cmd>
-        <res from="us" name="us"/>
-        <res from="sy" name="sy"/>
-        <res from="id" name="id"/>
-        <res from="wa" name="wa"/>
     </cpu>
     <cpu type="aix">
         <cmd>
@@ -24,4 +20,10 @@
         ]]>
         </cmd>
     </storage>
+    <service type="无缝管让他">
+        <sql>select Host, Db, User from mysql.db</sql>
+    </service>
+    <service>
+        <sql></sql>
+    </service>
 </root>

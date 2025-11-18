@@ -1,5 +1,5 @@
 <root>
-    <character id="1">
+    <character id="1" name="缝纫工">
         <cpu id="2" />
         <memory id="1"/>
     </character>

@@ -1,0 +1,13 @@
+<root>
+    <database name="" ip="" port="" username="" password="">
+        <instance name=""/>
+        <expire/>
+        <asm/>
+        <tablespace/>
+        <service>
+            <sql type="无缝管让他"/>
+            <sql type=""/>
+        </service>
+
+    </database>
+</root>
