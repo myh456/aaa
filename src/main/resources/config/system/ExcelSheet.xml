@@ -47,4 +47,19 @@
             </row>
         </table>
     </sheet>
+    <sheet name="应用联通性巡检">
+        <table>
+            <title>
+                应用联通性巡检巡检结果
+            </title>
+            <row>
+                <cell from="name" name="应用名称"/>
+                <cell from="url" name="请求地址"/>
+                <cell from="statusCode" name="响应代码"/>
+                <cell from="" name="巡检人"/>
+                <cell from="" name="巡检日期"/>
+                <cell from="" name="巡检时间"/>
+            </row>
+        </table>
+    </sheet>
 </excel>

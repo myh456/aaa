@@ -1,0 +1,18 @@
+<servers>
+    <server>
+        <name>百度</name>
+        <url>https://www.baidu.com</url>
+    </server>
+    <server>
+        <name>谷歌</name>
+        <url>https://www.google.com</url>
+    </server>
+    <server>
+        <name>搜狐</name>
+        <url>https://www.shouhu.com</url>
+    </server>
+    <server>
+        <name>有道</name>
+        <url>https://fanyi.youdao.com/#/TextTranslate</url>
+    </server>
+</servers>
