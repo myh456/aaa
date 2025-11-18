@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 @Component
+@SuppressWarnings("unchecked")
 public class XmlParser {
     public static Object parseElement(Element element) {
         Map<String, Object> map = new HashMap<>();
@@ -63,7 +64,6 @@ public class XmlParser {
                 is = Files.newInputStream(Paths.get(xmlPath));
         } catch (Exception e) {
             System.err.println("Error opening file: " + xmlPath);
-            e.printStackTrace();
             return null;
         }
         Document doc = reader.read(is);
