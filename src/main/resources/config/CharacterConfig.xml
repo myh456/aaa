@@ -1,6 +1,7 @@
 <root>
     <character id="1" name="缝纫工">
-        <cpu id="2" />
+        <cpu id="1" />
         <memory id="1"/>
+        <storage id="1"/>
     </character>
 </root>

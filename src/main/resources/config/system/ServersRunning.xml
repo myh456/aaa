@@ -17,12 +17,17 @@
         <res from="id" name="id"/>
         <res from="wa" name="wa"/>
     </cpu>
+    <memory>
+        <cmd>
+            free | awk 'NR==2{printf "{\"mem_total\":\"%s\",\"mem_used\":\"%s\",\"mem_free\":\"%s\",",$2,$3,$4}NR==3{printf "\"free_total\":\"%s\",\"free_used\":\"%s\",\"free_free\":\"%s\"}\n",$2,$3,$4}'
+        </cmd>
+    </memory>
     <storage>
         <cmd>
-        <![CDATA[
-            df -h {{path}} | awk 'NR==1{for(i=1;i<=NF;i++)h[i]=$i} NR==2{printf "{"; for(i=1;i<=NF;i++){printf "\""h[i]"\": \""$i"\""; if(i<NF)printf ", "} print "}"}'
-        ]]>
+            for d in {{path}}; do df "$d" | awk -v d="$d" 'NR==2{gsub(/%/,"",$5);printf "\"filesystem_%s\":\"%s\",\"size_%s\":\"%s\",\"used_%s\":\"%s\",\"avail_%s\":\"%s\",\"use_%s\":\"%s\",\"mounted_%s\":\"%s\",\"dir_%s\":\"%s\",",d,$1,d,$2,d,$3,d,$4,d,$5,d,$6,d,d}'; done | sed 's/,$//' | awk 'BEGIN{printf "{"} {printf $0} END{print "}"}'
         </cmd>
+        <res from="use_/" name="use_root"/>
+        <res from="use_/home" name="use_home"/>
     </storage>
     <service name="已经和他个人">
         <sql id="1">select Host, Db, User from mysql.db</sql>

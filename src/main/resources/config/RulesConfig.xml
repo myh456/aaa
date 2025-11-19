@@ -2,7 +2,7 @@
     <cpu id="1">
         <threshold>
             <us>90</us>
-            <id lower="true">10</id>
+            <id>&lt;10</id>
         </threshold>
     </cpu>
     <cpu id="2">
@@ -12,9 +12,19 @@
         </threshold>
     </cpu>
     <memory id="1">
-        <threshold>60</threshold>
+        <threshold>
+            <mem_use>80</mem_use>
+            <free_use>20</free_use>
+        </threshold>
     </memory>
     <memory id="2">
         <threshold>50</threshold>
     </memory>
+    <storage id="1">
+        <path-attr>/ /home /opt</path-attr>
+        <threshold>
+            <use_root>80</use_root>
+            <use_home>80</use_home>
+        </threshold>
+    </storage>
  </root>

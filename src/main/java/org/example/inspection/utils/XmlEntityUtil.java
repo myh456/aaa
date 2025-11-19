@@ -7,10 +7,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 @SuppressWarnings("unchecked")
@@ -69,8 +68,12 @@ public class XmlEntityUtil {
         rules = new HashMap<>();
         rulesMap.forEach((k, v) -> {
             rules.put(k, new HashMap<>());
-            for(Object v1: (List<Object>) v) {
-                rules.get(k).put(Integer.parseInt(((Map<String, Object>) v1).get("@id").toString()), v1);
+            if(v instanceof List) {
+                for(Object v1: (List<Object>) v) {
+                    rules.get(k).put(Integer.parseInt(((Map<String, Object>) v1).get("@id").toString()), v1);
+                }
+            } else {
+                rules.get(k).put(Integer.parseInt(((Map<String, Object>) v).get("@id").toString()), v);
             }
         });
         // 初始化角色配置
@@ -131,12 +134,22 @@ public class XmlEntityUtil {
             if(isDefault) {
                 server.putAll(defaultCheck);
             }
+            // 将命令插入服务器配置
             server.forEach((k, v) -> {
                 if(k.startsWith("@")) return;
                 if(cmds.containsKey(k)) {
+                    // 保存服务器配置的变量
+                    Map<String, List<String>> serverVars = new HashMap<>();
+                    ((Map<String, Object>)v).forEach((k1, v1) -> {
+                        if(k1.endsWith("-attr")) {
+                            if(v1 instanceof List) serverVars.put(k1.substring(0, k1.length()-5), (List<String>) v1);
+                            else serverVars.put(k1.substring(0, k1.length()-5), Collections.singletonList(v1.toString()));
+                        }
+                    });
+                    // 获取并插入命令
                     Object cmd = cmds.get(k);
                     if(cmd instanceof Map) {
-                        ((Map<String, Object>) v).put("cmd", cmd);
+                        ((Map<String, Object>) v).putAll((Map<String, Object>)cmd);
                     } else {
                         for(Object c: (List<Object>)cmd) {
                             if(((Map<String, Object>) c).get("@type").equals(server.get("@os"))) {
@@ -144,6 +157,19 @@ public class XmlEntityUtil {
                                 break;
                             }
                         }
+                    }
+                    // 根据变量生成cmd数组
+                    if(!serverVars.isEmpty()) {
+                        cmd = ((Map<String, Object>) v).get("cmd").toString();
+                        List<String> cmds = new ArrayList<>();
+                        for(String var: serverVars.keySet()) {
+                            if(cmd.toString().contains(String.format("{{%s}}", var))) {
+                                for(String val: serverVars.get(var)) {
+                                    cmds.add(cmd.toString().replace(String.format("{{%s}}", var), val));
+                                }
+                            }
+                        }
+                        ((Map<String, Object>) v).put("cmd", cmds);
                     }
                 }
             });
