@@ -1,30 +1,54 @@
 <root>
     <cpu id="1">
         <threshold>
-            <us>90</us>
-            <id>&lt;10</id>
+            <us higher="80"/>
+            <id lower="20"/>
         </threshold>
     </cpu>
     <cpu id="2">
         <threshold>
-            <us>95</us>
-            <id>70</id>
+            <us higher="90"/>
+            <id lower="10"/>
         </threshold>
     </cpu>
     <memory id="1">
         <threshold>
-            <mem_use>80</mem_use>
-            <free_use>20</free_use>
+            <mem_use higher="80"/>
+            <free_use higher="10"/>
         </threshold>
     </memory>
     <memory id="2">
-        <threshold>50</threshold>
+        <mem_use higher="85"/>
+        <free_use higher="10"/>
     </memory>
     <storage id="1">
         <path-attr>/ /home /opt</path-attr>
         <threshold>
-            <use_root>80</use_root>
-            <use_home>80</use_home>
+            <use_root higher="80"/>
+            <use_home higher="80"/>
         </threshold>
     </storage>
+    <service-zt id="1">
+        <db-attr>mysql.db</db-attr>
+        <threshold>
+            <faild higher="10"/>
+        </threshold>
+    </service-zt>
+    <service-zt id="2">
+        <db-attr>mysql.db</db-attr>
+        <db-attr>mysql.user</db-attr>
+        <threshold>
+            <faild higher="10"/>
+        </threshold>
+    </service-zt>
+    <service-sb id="1">
+        <threshold>
+            <faild higher="10"/>
+        </threshold>
+    </service-sb>
+    <service-rkls id="1">
+        <threshold>
+            <stream lower="1000"/>
+        </threshold>
+    </service-rkls>
  </root>

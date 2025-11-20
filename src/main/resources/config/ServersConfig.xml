@@ -4,6 +4,7 @@
     </server>
     <server name="WSL1" ip="127.0.0.1" port="2222" account="myh" password="456456xx" os="linux">
         <character id="1"/>
+        <character id="2"/>
     </server>
     <server name="WSL2" ip="127.0.0.1" port="2222" account="myh" password="456456xx" os="linux"/>
 </root>

@@ -1,5 +1,5 @@
 <root>
-    <cpu type="linux">
+    <cpu os="linux">
         <cmd>
             top -bn1 | grep "%Cpu(s)" | awk -F'[,% ]+' '{printf "{\"us\": %s, \"sy\": %s, \"id\": %s, \"wa\": %s}", $3, $5, $9, $11}'
         </cmd>
@@ -8,7 +8,7 @@
         <res from="id" name="id"/>
         <res from="wa" name="wa"/>
     </cpu>
-    <cpu type="aix">
+    <cpu os="aix">
         <cmd>
             topas -i 1 | head -10 | awk '/CPU%/,0 {if(NR==3) printf "{\"us\": %s, \"sy\": %s, \"id\": %s, \"wa\": %s}", $2, $4, $6, $8}'
         </cmd>
@@ -29,15 +29,13 @@
         <res from="use_/" name="use_root"/>
         <res from="use_/home" name="use_home"/>
     </storage>
-    <service name="已经和他个人">
-        <sql id="1">select Host, Db, User from mysql.db</sql>
-        <res from="Host" name="Host"/>
-    </service>
-    <service name="爱好体育合同文本">
-        <sql id="1">select Host, Db, User from mysql.db</sql>
-        <res from="Host" name="Host"/>
-    </service>
-    <service name="没有天赋v的">
-        <sql id="1">select Host, Db, User from mysql.db</sql>
-    </service>
+    <service-zt name="整体">
+        <sql>select * from {{db}}</sql>
+    </service-zt>
+    <service-sb name="失败">
+        <sql>select Host, Db, User from mysql.db</sql>
+    </service-sb>
+    <service-rk name="流水">
+        <sql>select Host, Db, User from mysql.db</sql>
+    </service-rk>
 </root>

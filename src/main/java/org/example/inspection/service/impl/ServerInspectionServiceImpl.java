@@ -3,7 +3,6 @@ package org.example.inspection.service.impl;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.extra.ssh.JschUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.parser.Feature;
 import com.jcraft.jsch.Session;
 import lombok.Getter;
@@ -17,13 +16,13 @@ import java.util.*;
 public class ServerInspectionServiceImpl implements ServerInspectionService {
 
     private final Map<String, List<Object>> results;
-
     public ServerInspectionServiceImpl() {
         results = new HashMap<>();
     }
+
     @Override
     @SuppressWarnings("unchecked")
-    public void inspection(Map<String, Object> server) {
+    public void inspection(Map<String, Object> server, String checker, String time, String date) {
         // TODO: 根据配置进行ip的解密，密码的解密
         // 获取连接session
         Session session = JschUtil.getSession(
@@ -79,6 +78,9 @@ public class ServerInspectionServiceImpl implements ServerInspectionService {
                 if(((Map<String, Object>) server.get(k)).containsKey("threshold"))
                     result.put("threshold", ((Map<String, Object>) server.get(k)).get("threshold"));
                 result.remove("cmd");
+                result.put("checker", checker);
+                result.put("time", time);
+                result.put("date", date);
                 // 将结果添加到结果集中
                 if(!results.containsKey(k)) results.put(k, new ArrayList<>());
                 results.get(k).add(result);

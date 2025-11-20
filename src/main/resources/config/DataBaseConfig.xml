@@ -1,20 +1,8 @@
 <root>
-    <database name="1" ip="1" port="1" username="1" password="1">
-        <instance name=""/>
-        <expire/>
-        <asm/>
-        <tablespace/>
-        <service name="已经和他个人"/>
-        <service name="没有天赋v的"/>
-        <service name="爱好体育合同文本"/>
+    <database name="数据库1" ip="127.0.0.1" port="3306" username="root" password="456456xx" type="mysql8">
+        <character id="3"/>
     </database>
-    <database name="2" ip="2" port="2" username="2" password="2">
-        <instance name=""/>
-        <expire/>
-        <asm/>
-        <tablespace/>
-        <service name="已经和他个人"/>
-        <service name="没有天赋v的"/>
-        <service name="爱好体育合同文本"/>
+    <database name="数据库2" ip="127.0.0.1" port="3306" username="root" password="456456xx" type="mysql8">
+        <character id="4"/>
     </database>
 </root>

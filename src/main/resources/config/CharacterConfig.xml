@@ -1,7 +1,26 @@
 <root>
-    <character id="1" name="缝纫工">
+    <character id="1" name="第一个角色">
         <cpu id="1" />
         <memory id="1"/>
+    </character>
+    <character id="2" name="第二个角色">
+        <memory id="2"/>
         <storage id="1"/>
+    </character>
+    <character id="3" name="mysql角色">
+<!--        <instance/>-->
+<!--        <expire/>-->
+<!--        <asm/>-->
+<!--        <tablespace/>-->
+        <service-zt id="1"/>
+        <service-sb id="1"/>
+    </character>
+    <character id="4" name="mysql角色">
+        <!--        <instance/>-->
+        <!--        <expire/>-->
+        <!--        <asm/>-->
+        <!--        <tablespace/>-->
+        <service-zt id="2"/>
+        <service-sb id="1"/>
     </character>
 </root>
