@@ -5,57 +5,48 @@
                 服务器CPU巡检结果
             </title>
             <row>
-                <cell from="name" name="服务器名称"/>
-                <cell from="us" name="CPU使用率"/>
-                <cell from="id" name="CPU空闲率"/>
-                <cell name="111">
-                    <cell from="sy" name="11"/>
-                    <cell from="wa" name="22"/>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="us" name="CPU使用率us" width="15"/>
+                <cell from="id" name="CPU空闲率id" width="15"/>
+                <cell name="合并" width="25">
+                    <cell from="sy" name="sy阿斯达"/>
+                    <cell from="wa" name="wa杀神风"/>
                 </cell>
             </row>
         </table>
     </sheet>
     <sheet name="服务器内存巡检">
-        <table>
+        <table for="memory">
             <title>
                 服务器物理内存巡检结果
             </title>
             <row>
-                <cell from="name" name="服务器名称"/>
-                <cell from="us" name="内存使用率"/>
-            </row>
-        </table>
-        <table>
-            <title>
-                服务器虚拟内存巡检结果
-            </title>
-            <row>
-                <cell from="name" name="服务器名称"/>
-                <cell from="us" name="内存使用率"/>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="ip" name="IP" width="15"/>
+                <cell from="us" name="内存使用率us" width="15"/>
             </row>
         </table>
     </sheet>
-    <sheet name="111巡检">
-        <table type="123">
+    <sheet name="业务量">
+        <table for="service-sb">
             <title>
-                edfrgthynj
-            </title>
-            <row sequence="true">
-                <cell name="nthrge1"/>
-                <cell name="nthrge2"/>
-                <cell name="nthrge3"/>
-            </row>
-        </table>
-    </sheet>
-    <sheet name="应用联通性巡检">
-        <table>
-            <title>
-                应用联通性巡检巡检结果
+                业务量1
             </title>
             <row>
-                <cell from="name" name="应用名称"/>
-                <cell from="url" name="请求地址"/>
-                <cell from="statusCode" name="响应代码"/>
+                <cell from="Host" name="A数量" width="15"/>
+                <cell from="Db" name="B数量" width="15"/>
+                <cell from="User" name="C数量" width="15"/>
+            </row>
+        </table>
+        <table for="service-rk">
+            <title>
+                业务量2
+            </title>
+            <row>
+                <cell from="Host" name="D数量" width="15"/>
+                <cell from="Db" name="E数量" width="15"/>
+                <cell from="User" name="F数量" width="15"/>
+                <cell from="g" name="G数量" width="15"/>
             </row>
         </table>
     </sheet>

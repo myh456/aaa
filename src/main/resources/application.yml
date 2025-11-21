@@ -3,3 +3,7 @@ server:
 
 config:
   path: classpath:config/
+
+excel:
+  export:
+    path: C:/Users/CUI/Desktop/巡检结果/

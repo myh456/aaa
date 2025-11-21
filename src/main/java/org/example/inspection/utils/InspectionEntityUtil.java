@@ -348,11 +348,41 @@ public class InspectionEntityUtil {
         }
 
         for (Map<String, String> headerMap : result.values()) {
-            headerMap.put("checkUser", "巡检人");
+            headerMap.put("checker", "巡检人");
             headerMap.put("date", "巡检日期");
             headerMap.put("time", "巡检时间");
         }
 
+        return result;
+    }
+
+    /**
+     * 从配置中提取Excel表头及列宽配置
+     *
+     * @return 一个映射，其中键是表标识符，值是ExcelHeaderConfig对象
+     */
+    public Map<String, ExcelHeaderConfig> extractExcelHeaderConfigs() {
+        Map<String, ExcelHeaderConfig> result = new LinkedHashMap<>();
+        if (excelConfigs == null) {
+            return result;
+        }
+        for (Object sheetObj : excelConfigs) {
+            if (!(sheetObj instanceof Map)) {
+                continue;
+            }
+            Map<String, Object> sheet = (Map<String, Object>) sheetObj;
+            Object tableObj = sheet.get("table");
+            if (tableObj instanceof Map) {
+                // 单表情况
+                processTableWithConfig(result, (Map<String, Object>) tableObj, false);
+            } else if (tableObj instanceof List) {
+                // 多表情况
+                List<Map<String, Object>> tables = (List<Map<String, Object>>) tableObj;
+                for (Map<String, Object> table : tables) {
+                    processTableWithConfig(result, table, true);
+                }
+            }
+        }
         return result;
     }
 
@@ -385,6 +415,32 @@ public class InspectionEntityUtil {
     }
 
     /**
+     * 处理表元素以提取表头配置
+     *
+     * @param result     要填充的结果映射
+     * @param table      要处理的表元素
+     * @param isMultiple 是否是包含多个表的sheet
+     */
+    private void processTableWithConfig(Map<String, ExcelHeaderConfig> result, Map<String, Object> table, boolean isMultiple) {
+        String forKey = (String) table.get("@for");
+        if (forKey == null) {
+            return;
+        }
+        Object rowObj = table.get("row");
+        if (!(rowObj instanceof Map)) {
+            return;
+        }
+        Map<String, Object> row = (Map<String, Object>) rowObj;
+        ExcelHeaderConfig headerConfig = new ExcelHeaderConfig();
+        Object cellObj = row.get("cell");
+        
+        // 统一处理单元格，无论是一个还是多个
+        processCellsWithConfig(headerConfig, cellObj, new int[]{0}); // 使用数组来跟踪列索引
+        
+        result.put(forKey, headerConfig);
+    }
+
+    /**
      * 处理单元格列表或单个单元格
      *
      * @param headerMap 要填充的表头映射
@@ -404,6 +460,26 @@ public class InspectionEntityUtil {
     }
 
     /**
+     * 处理单元格列表或单个单元格（带配置）
+     *
+     * @param headerConfig 要填充的表头配置
+     * @param cellObj      单元格对象或单元格列表
+     * @param columnIndex  列索引计数器（使用数组以便在递归中修改）
+     */
+    private void processCellsWithConfig(ExcelHeaderConfig headerConfig, Object cellObj, int[] columnIndex) {
+        if (cellObj instanceof List) {
+            // 多个单元格
+            List<Map<String, Object>> cells = (List<Map<String, Object>>) cellObj;
+            for (Map<String, Object> cell : cells) {
+                processCellWithConfig(headerConfig, cell, columnIndex);
+            }
+        } else if (cellObj instanceof Map) {
+            // 单个单元格
+            processCellWithConfig(headerConfig, (Map<String, Object>) cellObj, columnIndex);
+        }
+    }
+
+    /**
      * 处理单元格元素以提取字段映射
      *
      * @param headerMap 要填充的表头映射
@@ -418,5 +494,65 @@ public class InspectionEntityUtil {
         // 处理嵌套单元格
         Object nestedCellObj = cell.get("cell");
         processCells(headerMap, nestedCellObj);
+    }
+
+    /**
+     * 处理单元格元素以提取字段配置
+     *
+     * @param headerConfig 要填充的表头配置
+     * @param cell         要处理的单元格元素
+     * @param columnIndex  列索引计数器
+     */
+    private void processCellWithConfig(ExcelHeaderConfig headerConfig, Map<String, Object> cell, int[] columnIndex) {
+        String from = (String) cell.get("@from");
+        String name = (String) cell.get("@name");
+        
+        // 处理列宽
+        Object widthObj = cell.get("@width");
+        if (widthObj != null) {
+            try {
+                int width = Integer.parseInt(widthObj.toString());
+                headerConfig.setColumnWidth(columnIndex[0], width);
+            } catch (NumberFormatException e) {
+                // 忽略无效的宽度值
+            }
+        }
+        
+        if (from != null && name != null) {
+            headerConfig.setFieldIndex(from, columnIndex[0]);
+            columnIndex[0]++;
+        }
+        
+        // 处理嵌套单元格（合并单元格情况）
+        Object nestedCellObj = cell.get("cell");
+        if (nestedCellObj != null) {
+            int startCol = columnIndex[0];
+            
+            // 处理嵌套的单元格
+            if (nestedCellObj instanceof List) {
+                List<Map<String, Object>> nestedCells = (List<Map<String, Object>>) nestedCellObj;
+                for (Map<String, Object> nestedCell : nestedCells) {
+                    String nestedFrom = (String) nestedCell.get("@from");
+                    String nestedName = (String) nestedCell.get("@name");
+                    if (nestedFrom != null && nestedName != null) {
+                        headerConfig.setFieldIndex(nestedFrom, columnIndex[0]);
+                        columnIndex[0]++;
+                    }
+                }
+            } else if (nestedCellObj instanceof Map) {
+                Map<String, Object> nestedCell = (Map<String, Object>) nestedCellObj;
+                String nestedFrom = (String) nestedCell.get("@from");
+                String nestedName = (String) nestedCell.get("@name");
+                if (nestedFrom != null && nestedName != null) {
+                    headerConfig.setFieldIndex(nestedFrom, columnIndex[0]);
+                    columnIndex[0]++;
+                }
+            }
+            
+            // 如果有嵌套单元格，添加合并单元格信息
+            if (columnIndex[0] > startCol && name != null) {
+                headerConfig.addMergedCell(startCol, columnIndex[0] - 1, name);
+            }
+        }
     }
 }
