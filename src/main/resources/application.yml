@@ -6,4 +6,4 @@ config:
 
 excel:
   export:
-    path: C:/Users/CUI/Desktop/巡检结果/
+    path: D:/巡检结果/
