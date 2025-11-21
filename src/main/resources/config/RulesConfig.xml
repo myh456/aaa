@@ -11,16 +11,20 @@
             <id lower="10"/>
         </threshold>
     </cpu>
+
     <memory id="1">
         <threshold>
-            <mem_use higher="80"/>
-            <free_use higher="10"/>
+            <mem_used higher="80"/>
+            <free_used higher="10"/>
         </threshold>
     </memory>
     <memory id="2">
-        <mem_use higher="85"/>
-        <free_use higher="10"/>
+        <threshold>
+            <mem_used higher="85"/>
+            <free_used higher="10"/>
+        </threshold>
     </memory>
+
     <storage id="1">
         <path-attr>/ /home /opt</path-attr>
         <threshold>
@@ -28,22 +32,44 @@
             <use_home higher="80"/>
         </threshold>
     </storage>
+
+    <weblogic-process id="1"/>
+    <weblogic-service id="1">
+        <attrs>
+            <admin>admin</admin>
+            <password>admin123</password>
+        </attrs>
+        <attrs>
+            <admin>root</admin>
+            <password>root</password>
+        </attrs>
+        <threshold>
+            <exclusive higher="5"/>
+        </threshold>
+    </weblogic-service>
+
+    <expire-mysql id="1">
+        <threshold>
+            <remaining_days lower="7"/>
+        </threshold>
+    </expire-mysql>
+
     <service-zt id="1">
         <db-attr>mysql.db</db-attr>
         <threshold>
-            <faild higher="10"/>
+            <failed higher="6"/>
         </threshold>
     </service-zt>
     <service-zt id="2">
         <db-attr>mysql.db</db-attr>
         <db-attr>mysql.user</db-attr>
         <threshold>
-            <faild higher="10"/>
+            <failed higher="6"/>
         </threshold>
     </service-zt>
     <service-sb id="1">
         <threshold>
-            <faild higher="10"/>
+            <failed higher="6"/>
         </threshold>
     </service-sb>
     <service-rkls id="1">

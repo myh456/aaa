@@ -1,5 +1,6 @@
 package org.example.inspection.service;
 
+import com.alibaba.fastjson.JSONObject;
 import org.example.inspection.utils.InspectionEntityUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,16 +22,13 @@ public class DatabaseInspectionServiceTest {
 
     @Test
     public void test() throws SQLException {
-        List<Object> databases = inspectionEntityUtil.getDatabases();
-        for (Object database : databases) {
-            databaseInspectionService.inspection((Map<String, Object>) database, "神州数码", "16:00", "2025-11-19");
-        }
-        Map<String, List<Object>> results = databaseInspectionService.getResults();
-        results.forEach((k, v) -> {
-            System.out.println("============");
-            System.out.println(k + ": ");
-            v.forEach(System.out::println);
-            System.out.println("------------");
-        });
+        Map<String, List<Object>> results = databaseInspectionService.inspection("神州数码", "16:00", "2025-11-19");
+        System.out.println(JSONObject.toJSONString(results));
+//        results.forEach((k, v) -> {
+//            System.out.println("============");
+//            System.out.println(k + ": ");
+//            v.forEach(System.out::println);
+//            System.out.println("------------");
+//        });
     }
 }

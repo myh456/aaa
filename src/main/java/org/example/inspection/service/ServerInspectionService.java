@@ -5,7 +5,6 @@ import java.util.Map;
 
 public interface ServerInspectionService {
 
-    void inspection(Map<String, Object> server, String checker, String time, String date);
+    Map<String, List<Object>> inspection(String checker, String time, String date);
 
-    Map<String, List<Object>> getResults();
 }

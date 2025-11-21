@@ -6,7 +6,5 @@ import java.util.Map;
 
 public interface DatabaseInspectionService {
 
-    void inspection(Map<String, Object> database, String checker, String time, String date) throws SQLException;
-
-    Map<String, List<Object>> getResults();
+    Map<String, List<Object>> inspection(String checker, String time, String date);
 }

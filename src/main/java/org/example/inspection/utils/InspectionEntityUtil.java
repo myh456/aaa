@@ -168,6 +168,7 @@ public class InspectionEntityUtil {
                 if (cmds.containsKey(k)) {
                     // 保存服务器配置的变量
                     Map<String, List<String>> serverVars = new HashMap<>();
+                    List<Map<String, String>> serverMultiVars = new ArrayList<>();
                     ((Map<String, Object>) v).forEach((k1, v1) -> {
                         if (k1.endsWith("-attr")) {
                             String attr = k1.substring(0, k1.length() - 5);
@@ -175,6 +176,12 @@ public class InspectionEntityUtil {
                                 serverVars.put(attr, (List<String>) v1);
                             } else {
                                 serverVars.put(attr, Collections.singletonList(v1.toString()));
+                            }
+                        } else if ("attrs".equals(k1)) {
+                            if (v1 instanceof List) {
+                                serverMultiVars.addAll((List<Map<String, String>>) v1);
+                            } else {
+                                serverMultiVars.add((Map<String, String>) v1);
                             }
                         }
                     });
@@ -200,6 +207,21 @@ public class InspectionEntityUtil {
                                     cmds.add(cmd.toString().replace(String.format("{{%s}}", var), val));
                                 }
                             }
+                        }
+                        ((Map<String, Object>) v).put("cmd", cmds);
+                    } else if (!serverMultiVars.isEmpty()) {
+                        cmd = ((Map<String, Object>) v).get("cmd").toString();
+                        List<String> cmds = new ArrayList<>();
+                        for (Map<String, String> vars : serverMultiVars) {
+                            String cmdTemp = cmd.toString();
+                            for(Map.Entry<String, String> varsEntry : vars.entrySet()) {
+                                String var = varsEntry.getKey();
+                                String val = varsEntry.getValue();
+                                if(cmd.toString().contains(String.format("{{%s}}", var))) {
+                                    cmdTemp = cmdTemp.replace(String.format("{{%s}}", var), val);
+                                }
+                            }
+                            cmds.add(cmdTemp);
                         }
                         ((Map<String, Object>) v).put("cmd", cmds);
                     }

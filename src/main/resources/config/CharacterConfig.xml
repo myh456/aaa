@@ -6,10 +6,12 @@
     <character id="2" name="第二个角色">
         <memory id="2"/>
         <storage id="1"/>
+        <weblogic-process id="1"/>
+        <weblogic-service id="1"/>
     </character>
     <character id="3" name="mysql角色">
 <!--        <instance/>-->
-<!--        <expire/>-->
+        <expire-mysql id="1"/>
 <!--        <asm/>-->
 <!--        <tablespace/>-->
         <service-zt id="1"/>

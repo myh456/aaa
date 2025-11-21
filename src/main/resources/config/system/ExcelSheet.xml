@@ -16,7 +16,7 @@
         </table>
     </sheet>
     <sheet name="服务器内存巡检">
-        <table for="memory">
+        <table>
             <title>
                 服务器物理内存巡检结果
             </title>

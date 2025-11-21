@@ -3,37 +3,110 @@
         <cmd>
             top -bn1 | grep "%Cpu(s)" | awk -F'[,% ]+' '{printf "{\"us\": %s, \"sy\": %s, \"id\": %s, \"wa\": %s}", $3, $5, $9, $11}'
         </cmd>
-        <res from="us" name="us"/>
-        <res from="sy" name="sy"/>
-        <res from="id" name="id"/>
-        <res from="wa" name="wa"/>
     </cpu>
     <cpu os="aix">
         <cmd>
             topas -i 1 | head -10 | awk '/CPU%/,0 {if(NR==3) printf "{\"us\": %s, \"sy\": %s, \"id\": %s, \"wa\": %s}", $2, $4, $6, $8}'
         </cmd>
-        <res from="us" name="us"/>
-        <res from="sy" name="sy"/>
-        <res from="id" name="id"/>
-        <res from="wa" name="wa"/>
     </cpu>
-    <memory>
+
+    <memory os="linux">
         <cmd>
             free | awk 'NR==2{printf "{\"mem_total\":\"%s\",\"mem_used\":\"%s\",\"mem_free\":\"%s\",",$2,$3,$4}NR==3{printf "\"free_total\":\"%s\",\"free_used\":\"%s\",\"free_free\":\"%s\"}\n",$2,$3,$4}'
         </cmd>
     </memory>
-    <storage>
+    <memory os="aix">
+        <cmd>
+            svmon -G | awk 'NR==2{printf "{\"available\": \"%dM\", \"swap_total\": \"%dM\", \"swap_used\": \"0\"}", $4*4/1024, $3*4/1024}'
+        </cmd>
+    </memory>
+
+    <storage os="linux">
         <cmd>
             for d in {{path}}; do df "$d" | awk -v d="$d" 'NR==2{gsub(/%/,"",$5);printf "\"filesystem_%s\":\"%s\",\"size_%s\":\"%s\",\"used_%s\":\"%s\",\"avail_%s\":\"%s\",\"use_%s\":\"%s\",\"mounted_%s\":\"%s\",\"dir_%s\":\"%s\",",d,$1,d,$2,d,$3,d,$4,d,$5,d,$6,d,d}'; done | sed 's/,$//' | awk 'BEGIN{printf "{"} {printf $0} END{print "}"}'
         </cmd>
         <res from="use_/" name="use_root"/>
         <res from="use_/home" name="use_home"/>
     </storage>
+    <storage os="aix">
+        <cmd>
+            for d in {{path}}; do df "$d" | awk -v d="$d" 'NR==2{size=$2;free=$3;used=size-free;pct=$4;mount=$7;gsub(/%/,"",pct);printf "\"filesystem_%s\":\"%s\",\"size_%s\":\"%s\",\"used_%s\":\"%s\",\"avail_%s\":\"%s\",\"use_%s\":\"%s\",\"mounted_%s\":\"%s\",\"dir_%s\":\"%s\",",d,$1,d,size,d,used,d,free,d,pct,d,mount,d,d}'; done | sed 's/,$//' | awk 'BEGIN{printf "{"} {printf $0} END{print "}"}'
+        </cmd>
+    </storage>
+
+    <docker>
+        <cmd>
+            docker ps --format '{{.Names}};{{.ID}};{{.Image}};{{.CreatedAt}};{{.Status}};{{.Ports}}' | awk -F ";" 'BEGIN{printf "{"} {printf "\"ContainerId_%s\":\"%s\",\"Image_%s\":\"%s\",\"Created_%s\":\"%s\",\"Status_%s\":\"%s\",\"Ports_%s\":\"%s\",", $1,$2,$1,$3,$1,$4,$1,$5,$1,$6} END{print "\b}"}'
+        </cmd>
+    </docker>
+
+    <ogg os="linux">
+        <cmd>
+        <![CDATA[
+            ggsci -s "info {{process_path}}" | awk 'NR==1{for(i=1;i<=NF;i++)h[i]=$i} NR==2{printf "{"; for(i=1;i<=NF;i++){printf "\""h[i]"\": \""$i"\""; if(i<NF)printf ", "} print "}"}'
+        ]]>
+        </cmd>
+    </ogg>
+    <ogg os="aix">
+        <cmd>
+        <![CDATA[
+            ggsci << EOF | awk 'NR==1{for(i=1;i<=NF;i++)h[i]=$i} NR==2{printf "{"; for(i=1;i<=NF;i++){printf "\""h[i]"\": \""$i"\""; if(i<NF)printf ", "} print "}"}'
+            info {{process_path}}
+            EOF
+        ]]>
+        </cmd>
+    </ogg>
+
+    <weblogic-process>
+        <cmd>
+            ps -ef | grep root | grep -v grep | awk 'BEGIN{printf "["} {if(NR>1)printf ","; printf "{\"user\":\"%s\",\"pid\":%s,\"ppid\":%s,\"start\":\"%s\",\"time\":\"%s\",\"command\":\"%s\"}", $1, $2, $3, $5, $7, substr($0, index($0,$8))} END{print "]"}'
+        </cmd>
+    </weblogic-process>
+    <weblogic-service>
+        <cmd>
+            echo "connect('{{admin}}','{{password}}','t3://localhost:7001');dr=domainRuntime();sr=dr.getServerRuntimes();import json;out=[];[out.append({'server':s.getName(),'state':s.getState(),'listen_port':s.getListenPort(),'total':s.getThreadPoolRuntime().getExecuteThreadTotalCount(),'idle':s.getThreadPoolRuntime().getExecuteThreadIdleCount(),'hogging':s.getThreadPoolRuntime().getHoggingThreadCount(),'complete':s.getThreadPoolRuntime().getCompletedRequestCount(),'queue':s.getThreadPoolRuntime().getQueueLength(),'standby':s.getThreadPoolRuntime().getStandbyThreadCount(),'pending':s.getThreadPoolRuntime().getPendingUserRequestCount(),'exclusive':s.getThreadPoolRuntime().getStuckThreadCount()}) for s in sr];print json.dumps(out)" | java weblogic.WLST -skipWLSModuleScanning
+        </cmd>
+    </weblogic-service>
+
+    <instance-oracle>
+        <sql>
+            SELECT A.INSTANCE_NUMBER AS instanceNumber,A.INSTANCE_NAME AS instanceName,A.HOST_NAME AS hostName,A.STARTUP_TIME AS startupTime,A.STATUS AS status FROM GV$INSTANCE A ORDER BY
+            INSTANCE_NUMBER
+        </sql>
+    </instance-oracle>
+    <instance-mysql>
+        <sql>
+        </sql>
+    </instance-mysql>
+
+    <expire-oracle>
+        <sql>
+        <![CDATA[
+            SELECT USERNAME,T.ACCOUNT_STATUS,LOCK_DATE,T.EXPIRY_DATE,CREATED,PROFILE FROM DBA_USERS T WHERE T.USERNAME NOT IN
+            ('MGMT_VIEW','SYS','SYSTEM','OUTLN','SPMON','SYSMAN','oracle_OCM','DIP','GSZM_YW','SPATIAL_CSW_ADMIN_USR','SPATIAL_WFS_ADMIN_USR','SCOTT','GGSDS','GGSGS','APEX_PUBLIC_USER','XS$NULL','MDDATA') AND
+            T.USERNAME NOT LIKE '%\\_GS' ESCAPE '\\' AND T.USERNAME NOT LIKE '%\\_DS' ESCAPE '\\' AND T.USERNAME NOT LIKE 'HX\\_%' ESCAPE '\\' AND T.USERNAME NOT LIKE 'GS\\_%' ESCAPE '\\' AND T.USERNAME NOT LIKE 'U\
+            \_%' ESCAPE '\\' AND T.USERNAME NOT LIKE 'SBF\\_%' ESCAPE '\\' AND T.DEFAULT_TABLESPACE NOT IN ('SYSAUX','SYSTEM') AND T.EXPIRY_DATE < SYSDATE + 7")
+        ]]>
+        </sql>
+    </expire-oracle>
+    <expire-mysql>
+        <sql>
+            SELECT `user`, `host`, `password_last_changed`, ifnull(`password_lifetime`, "") `password_lifetime`, `password_expired`, CASE
+            WHEN `password_lifetime` IS NULL THEN ""
+            ELSE DATE_ADD(`password_last_changed`, INTERVAL `password_lifetime` DAY)
+            END AS `expire_time`, CASE
+            WHEN `password_lifetime` IS NULL THEN ""
+            else DATEDIFF(DATE_ADD(`password_last_changed`, INTERVAL `password_lifetime` DAY),now())
+            END AS`remaining_days`
+            FROM mysql.user;
+        </sql>
+    </expire-mysql>
+
     <service-zt name="整体">
-        <sql>select * from {{db}}</sql>
+        <sql>select *, round(rand() * 10) as failed from {{db}}</sql>
     </service-zt>
     <service-sb name="失败">
-        <sql>select Host, Db, User from mysql.db</sql>
+        <sql>select Host, Db, User, round(rand() * 10) as failed from mysql.db</sql>
     </service-sb>
     <service-rk name="流水">
         <sql>select Host, Db, User from mysql.db</sql>

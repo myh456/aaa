@@ -1,6 +1,6 @@
 package org.example.inspection.service;
 
-import org.example.inspection.InspectionApplication;
+import com.alibaba.fastjson.JSONObject;
 import org.example.inspection.utils.InspectionEntityUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,21 +17,17 @@ import java.util.Map;
 public class ServerInspectionServiceTest {
     @Autowired
     private ServerInspectionService serverInspectionService;
-    @Autowired
-    private InspectionEntityUtil inspectionEntityUtil;
 
     @Test
     public void test() {
-        List<Object> servers = inspectionEntityUtil.getServers();
-        for (Object server : servers) {
-            serverInspectionService.inspection((Map<String, Object>) server, "神州数码", "16:00", "2025-11-19");
-        }
-        Map<String, List<Object>> results = serverInspectionService.getResults();
-        results.forEach((k, v) -> {
-            System.out.println("============");
-            System.out.println(k + ": ");
-            v.forEach(System.out::println);
-            System.out.println("------------");
-        });
+        Map<String, List<Object>> results = serverInspectionService.inspection("神州数码", "16:00", "2025-11-19");
+        JSONObject json = JSONObject.parseObject(JSONObject.toJSONString(results));
+        System.out.println(json.toJSONString());
+//        results.forEach((k, v) -> {
+//            System.out.println("============");
+//            System.out.println(k + ": ");
+//            v.forEach(System.out::println);
+//            System.out.println("------------");
+//        });
     }
 }
