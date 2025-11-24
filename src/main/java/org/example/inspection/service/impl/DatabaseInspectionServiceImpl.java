@@ -3,14 +3,12 @@ package org.example.inspection.service.impl;
 import cn.hutool.db.Db;
 import cn.hutool.db.Entity;
 import com.alibaba.druid.pool.DruidDataSource;
-import lombok.Getter;
 import org.example.inspection.service.DatabaseInspectionService;
 import org.example.inspection.utils.EncryptionUtil;
 import org.example.inspection.utils.InspectionEntityUtil;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -41,32 +39,38 @@ public class DatabaseInspectionServiceImpl implements DatabaseInspectionService 
         attrs.put("checker", checker);
         attrs.put("time", time);
         attrs.put("date", date);
-        // TODO: 密码解密
         String url;
-        String username = database.get("@username").toString();
-        String password = encryptionUtil.decrypt(database.get("@password").toString());
-        switch (database.get("@type").toString()) {
+        String username = attrs.get("username").toString();
+        String password = encryptionUtil.decrypt(attrs.get("password").toString());
+        DruidDataSource dataSource = new DruidDataSource();
+        switch (attrs.get("type").toString()) {
             case "mysql5":
             case "mysql":
             case "mysql8":
                 url = "jdbc:mysql://" + database.get("@ip") + ":" + database.get("@port");
+                dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+                dataSource.setUrl(url);
                 break;
             case "oracle":
                 url = "jdbc:oracle:thin:@" + database.get("@ip") + ":" + database.get("@port");
+                dataSource.setDriverClassName("oracle.jdbc.driver.OracleDriver");
+                dataSource.setUrl(url);
                 break;
             case "clickhouse":
                 url = "jdbc:clickhouse://" + database.get("@ip") + ":" + database.get("@port");
+                dataSource.setDriverClassName("com.clickhouse.jdbc.ClickHouseDriver");
+                dataSource.setUrl(url);
                 break;
             case "vertica":
                 url = "jdbc:vertica://" + database.get("@ip") + ":" + database.get("@port");
+                dataSource.setDriverClassName("com.vertica.jdbc.Driver");
+                dataSource.setUrl(url);
                 break;
             default:
                 throw new RuntimeException("不支持的数据库类型");
         }
         Db db = null;
         try {
-            DruidDataSource dataSource = new DruidDataSource();
-            dataSource.setUrl(url);
             dataSource.setUsername(username);
             dataSource.setPassword(password);
             db = Db.use(dataSource);

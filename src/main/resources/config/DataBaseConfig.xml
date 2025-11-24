@@ -12,11 +12,41 @@
     <database
             name="数据库2"
             ip="127.0.0.1"
-            port="3306"
+            port="3307"
             username="root"
             password="JxxbhQOVZT2JKmMgsnbeVZ1cpah3FLAX1JTOWZ2qgziiTw97qhBb/E6lFx+OUpC0p/laZddKkQ3urH+Td6kFxxn9/ks1EK5cuIQdFClx4b42fDh/S7K6MS0FvsRHCqoGWqzXvyPCsD5mXQpqZsXPVS6mx/z8fX2vi/Xgbdqb2byaY5kpDrLW2JcEQt/C+on61ZuDYQDwPiM+6i1xmznohou9a8N58RkuSwdRaunAss3r3lq7L9UZPkqZcm1Ums62jiI4tJ+XbHbdVDJyO/YJye95tysQfL+WENRHxKgE52dFHECM+8uqQm2kPh8Q6j2/lRi7fkShUp9EnR72vb75Ng=="
-            type="mysql8"
+            type="mysql5"
+    >
+        <character id="3"/>
+    </database>
+    <database
+            name="数据库3"
+            ip="127.0.0.1"
+            port="1521"
+            username="system"
+            password="JxxbhQOVZT2JKmMgsnbeVZ1cpah3FLAX1JTOWZ2qgziiTw97qhBb/E6lFx+OUpC0p/laZddKkQ3urH+Td6kFxxn9/ks1EK5cuIQdFClx4b42fDh/S7K6MS0FvsRHCqoGWqzXvyPCsD5mXQpqZsXPVS6mx/z8fX2vi/Xgbdqb2byaY5kpDrLW2JcEQt/C+on61ZuDYQDwPiM+6i1xmznohou9a8N58RkuSwdRaunAss3r3lq7L9UZPkqZcm1Ums62jiI4tJ+XbHbdVDJyO/YJye95tysQfL+WENRHxKgE52dFHECM+8uqQm2kPh8Q6j2/lRi7fkShUp9EnR72vb75Ng=="
+            type="oracle"
     >
         <character id="4"/>
+    </database>
+    <database
+            name="数据库4"
+            ip="127.0.0.1"
+            port="5433"
+            username="dbadmin"
+            password="JxxbhQOVZT2JKmMgsnbeVZ1cpah3FLAX1JTOWZ2qgziiTw97qhBb/E6lFx+OUpC0p/laZddKkQ3urH+Td6kFxxn9/ks1EK5cuIQdFClx4b42fDh/S7K6MS0FvsRHCqoGWqzXvyPCsD5mXQpqZsXPVS6mx/z8fX2vi/Xgbdqb2byaY5kpDrLW2JcEQt/C+on61ZuDYQDwPiM+6i1xmznohou9a8N58RkuSwdRaunAss3r3lq7L9UZPkqZcm1Ums62jiI4tJ+XbHbdVDJyO/YJye95tysQfL+WENRHxKgE52dFHECM+8uqQm2kPh8Q6j2/lRi7fkShUp9EnR72vb75Ng=="
+            type="vertica"
+    >
+        <character id="5"/>
+    </database>
+    <database
+            name="数据库5"
+            ip="127.0.0.1"
+            port="8123"
+            username="default"
+            password="JxxbhQOVZT2JKmMgsnbeVZ1cpah3FLAX1JTOWZ2qgziiTw97qhBb/E6lFx+OUpC0p/laZddKkQ3urH+Td6kFxxn9/ks1EK5cuIQdFClx4b42fDh/S7K6MS0FvsRHCqoGWqzXvyPCsD5mXQpqZsXPVS6mx/z8fX2vi/Xgbdqb2byaY5kpDrLW2JcEQt/C+on61ZuDYQDwPiM+6i1xmznohou9a8N58RkuSwdRaunAss3r3lq7L9UZPkqZcm1Ums62jiI4tJ+XbHbdVDJyO/YJye95tysQfL+WENRHxKgE52dFHECM+8uqQm2kPh8Q6j2/lRi7fkShUp9EnR72vb75Ng=="
+            type="clickhouse"
+    >
+        <character id="6"/>
     </database>
 </root>

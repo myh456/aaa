@@ -70,37 +70,224 @@
 
     <instance-oracle>
         <sql>
-            SELECT A.INSTANCE_NUMBER AS instanceNumber,A.INSTANCE_NAME AS instanceName,A.HOST_NAME AS hostName,A.STARTUP_TIME AS startupTime,A.STATUS AS status FROM GV$INSTANCE A ORDER BY
-            INSTANCE_NUMBER
+            SELECT
+                A.INSTANCE_NUMBER AS instanceNumber,
+                A.INSTANCE_NAME AS instanceName,
+                A.HOST_NAME AS hostName,
+                A.STARTUP_TIME AS startupTime,
+                A.STATUS AS status
+            FROM
+                GV$INSTANCE A
+            ORDER BY
+                INSTANCE_NUMBER
         </sql>
     </instance-oracle>
     <instance-mysql>
         <sql>
+            SELECT
+                1 AS instanceNumber,
+                @@hostname AS instanceName,
+                @@hostname AS hostName,
+                NOW() - INTERVAL (VARIABLE_VALUE) SECOND AS startupTime,
+                'OPEN' AS status
+            FROM
+                performance_schema.global_status
+            WHERE
+                VARIABLE_NAME = 'Uptime';
         </sql>
     </instance-mysql>
+    <instance-clickhouse>
+        <sql>
+            SELECT
+                1 AS instanceNumber,
+                hostName() AS instanceName,
+                hostName() AS hostName,
+                now() - uptime() AS startupTime,
+                'OPEN' AS status
+        </sql>
+    </instance-clickhouse>
+    <instance-vertica>
+        <sql>
+            WITH latest_states AS (
+                SELECT
+                    node_name,
+                    node_state,
+                    event_timestamp,
+                    ROW_NUMBER() OVER (PARTITION BY node_name ORDER BY event_timestamp DESC) as rn
+                FROM node_states
+            )
+            SELECT
+                n.node_id AS instanceNumber,
+                ls.node_name AS instanceName,
+                n.node_address AS hostName,
+                TO_CHAR((NOW() - ls.event_timestamp), 'HH24:MI:SS') AS startupTime,
+                CASE WHEN ls.node_state = 'UP' THEN 'OPEN' ELSE ls.node_state END AS status
+            FROM latest_states ls
+                LEFT JOIN nodes n ON ls.node_name = n.node_name
+            WHERE ls.rn = 1
+        </sql>
+    </instance-vertica>
 
     <expire-oracle>
         <sql>
-        <![CDATA[
-            SELECT USERNAME,T.ACCOUNT_STATUS,LOCK_DATE,T.EXPIRY_DATE,CREATED,PROFILE FROM DBA_USERS T WHERE T.USERNAME NOT IN
-            ('MGMT_VIEW','SYS','SYSTEM','OUTLN','SPMON','SYSMAN','oracle_OCM','DIP','GSZM_YW','SPATIAL_CSW_ADMIN_USR','SPATIAL_WFS_ADMIN_USR','SCOTT','GGSDS','GGSGS','APEX_PUBLIC_USER','XS$NULL','MDDATA') AND
-            T.USERNAME NOT LIKE '%\\_GS' ESCAPE '\\' AND T.USERNAME NOT LIKE '%\\_DS' ESCAPE '\\' AND T.USERNAME NOT LIKE 'HX\\_%' ESCAPE '\\' AND T.USERNAME NOT LIKE 'GS\\_%' ESCAPE '\\' AND T.USERNAME NOT LIKE 'U\
-            \_%' ESCAPE '\\' AND T.USERNAME NOT LIKE 'SBF\\_%' ESCAPE '\\' AND T.DEFAULT_TABLESPACE NOT IN ('SYSAUX','SYSTEM') AND T.EXPIRY_DATE < SYSDATE + 7")
-        ]]>
+            SELECT
+                USERNAME,
+                T.ACCOUNT_STATUS,
+                LOCK_DATE,
+                T.EXPIRY_DATE,
+                CREATED,
+                PROFILE
+            FROM
+                DBA_USERS T
+            WHERE
+                T.USERNAME NOT IN
+                    ('MGMT_VIEW', 'SYS', 'SYSTEM', 'OUTLN', 'SPMON', 'SYSMAN', 'oracle_OCM', 'DIP', 'GSZM_YW', 'SPATIAL_CSW_ADMIN_USR', 'SPATIAL_WFS_ADMIN_USR', 'SCOTT', 'GGSDS', 'GGSGS', 'APEX_PUBLIC_USER', 'XS$NULL', 'MDDATA')
+                AND T.USERNAME NOT LIKE '%\_GS' ESCAPE '\'
+                AND T.USERNAME NOT LIKE '%\_DS' ESCAPE '\'
+                AND T.USERNAME NOT LIKE 'HX\_%' ESCAPE '\'
+                AND T.USERNAME NOT LIKE 'GS\_%' ESCAPE '\'
+                AND T.USERNAME NOT LIKE 'U\_%' ESCAPE '\'
+                AND T.USERNAME NOT LIKE 'SBF\_%' ESCAPE '\'
+                AND T.DEFAULT_TABLESPACE NOT IN ('SYSAUX', 'SYSTEM')
         </sql>
     </expire-oracle>
     <expire-mysql>
         <sql>
-            SELECT `user`, `host`, `password_last_changed`, ifnull(`password_lifetime`, "") `password_lifetime`, `password_expired`, CASE
-            WHEN `password_lifetime` IS NULL THEN ""
-            ELSE DATE_ADD(`password_last_changed`, INTERVAL `password_lifetime` DAY)
-            END AS `expire_time`, CASE
-            WHEN `password_lifetime` IS NULL THEN ""
-            else DATEDIFF(DATE_ADD(`password_last_changed`, INTERVAL `password_lifetime` DAY),now())
-            END AS`remaining_days`
-            FROM mysql.user;
+            SELECT
+                `USER` USERNAME,
+                CASE
+                    WHEN ACCOUNT_LOCKED = 'Y' AND PASSWORD_EXPIRED = 'Y' THEN 'EXPIRED &amp; LOCKED'
+                    WHEN ACCOUNT_LOCKED = 'Y' THEN 'LOCKED'
+                    WHEN PASSWORD_EXPIRED = 'Y' THEN 'EXPIRED'
+                    ELSE 'OPEN'
+                END AS ACCOUNT_STATUS,
+                '' AS LOCK_DATE,
+                CASE
+                    WHEN `PASSWORD_LIFETIME` IS NULL THEN ""
+                    ELSE DATE_ADD(`PASSWORD_LAST_CHANGED`, INTERVAL `PASSWORD_LIFETIME` DAY)
+                END AS `EXPIRY_DATE`,
+                '' AS `CREATED`,
+                '' AS `PROFILE`
+            FROM
+                MYSQL.USER;
+            WHERE `USER` NOT IN ('root', 'mysql.sys', 'mysql.session', 'mysql.infoschema', 'sys')
+                AND `USER` NOT LIKE '%\\_GS' ESCAPE '\\'
+                AND `USER` NOT LIKE '%\\_DS' ESCAPE '\\'
+                AND `USER` NOT LIKE 'HX\\_%' ESCAPE '\\'
+                AND `USER` NOT LIKE 'GS\\_%' ESCAPE '\\'
+                AND `USER` NOT LIKE 'U\\_%' ESCAPE '\\'
+                AND `USER` NOT LIKE 'SBF\\_%' ESCAPE '\\'
+            ORDER BY `USER`;
         </sql>
     </expire-mysql>
+    <expire-clickhouse>
+        <sql>
+            SELECT
+                name AS user_name,
+                CASE
+                    WHEN empty(host_ip) AND length(host_names) = 0 THEN 'LOCKED'
+                    WHEN has(host_ip, '::/0') AND length(host_names) = 0 THEN 'OPEN'
+                    ELSE 'RESTRICTED'
+                END AS ACCOUNT_STATUS,
+                '' AS LOCK_DATE,
+                '' AS EXPIRY_DATE,
+                '' AS CREATED,
+                '' AS PROFILE
+            FROM system.users
+            WHERE name NOT IN ('default');
+        </sql>
+    </expire-clickhouse>
+    <expire-vertica>
+        <sql>
+            SELECT
+                U.USER_NAME,
+                CASE
+                    WHEN U.IS_LOCKED AND PF.PASSWORD_LIFE_TIME ::! INT IS NOT NULL AND NOW() > TIMESTAMPADD('D', PF.PASSWORD_LIFE_TIME ::! INT, P.PASSWORD_CREATE_TIME)
+                        THEN 'EXPIRED &amp; LOCKED'
+                    WHEN U.IS_LOCKED
+                        THEN 'LOCKED'
+                    WHEN PF.PASSWORD_LIFE_TIME ::! INT IS NOT NULL AND NOW() > TIMESTAMPADD('D', PF.PASSWORD_LIFE_TIME ::! INT, P.PASSWORD_CREATE_TIME)
+                        THEN 'EXPIRED'
+                    ELSE 'OPEN'
+                END AS ACCOUNT_STATUS,
+                '' AS LOCK_DATE,
+                CASE
+                    WHEN PF.PASSWORD_LIFE_TIME ::! INT IS NOT NULL
+                        THEN TIMESTAMPADD('D', PF.PASSWORD_LIFE_TIME ::! INT, P.PASSWORD_CREATE_TIME)
+                    ELSE NULL
+                END AS EXPIRY_DATE,
+                '' AS CREATED,
+                '' AS PROFILE
+            FROM V_CATALOG.USERS U
+            INNER JOIN V_CATALOG.PASSWORDS P
+                ON U.USER_NAME = P.USER_NAME
+            INNER JOIN V_CATALOG.PROFILES PF
+                ON U.PROFILE_NAME = PF.PROFILE_NAME;
+        </sql>
+    </expire-vertica>
+
+    <asm-oracle>
+        <sql>
+            SELECT
+                NAME,
+                TOTAL_MB,
+                FREE_MB,
+                CASE
+                    WHEN free_mb = 0 THEN 0
+                    ELSE round((total_MB-FREE_MB)/ total_MB * 100, 2)
+                END || '%' USE
+            FROM V$asm_diskgroup
+        </sql>
+    </asm-oracle>
+
+    <tablespace-oracle>
+        <sql>
+            SELECT
+                UPPER(FREE.TABLESPACE_NAME) AS tablespaceName,
+                CUR_MB AS total,
+                MAX_MB AS maxTotal,
+                (CUR_MB - FREE_MB) AS used,
+                TO_CHAR(ROUND((CUR_MB - FREE_MB) / CUR_MB * 100, 2), '990.99') || '%' AS usedPct,
+                TO_CHAR(ROUND((CUR_MB - FREE_MB) / MAX_MB * 100, 2), '990.99') || '%' AS maxUsedPct
+            FROM(
+                SELECT
+                    TABLESPACE_NAME,
+                    ROUND(SUM(BYTES) / (1024 * 1024), 2) FREE_MB
+                FROM
+                    DBA_FREE_SPACE
+                GROUP BY
+                    TABLESPACE_NAME
+            ) FREE, (
+                SELECT
+                    DD.TABLESPACE_NAME,
+                    ROUND(SUM(DD.BYTES) / (1024 * 1024), 2) CUR_MB,
+                    ROUND(SUM(decode(dd.AUTOEXTENSIBLE, 'YES', DD.MAXBYTES, dd.BYTES)) / (1024 * 1024), 2) MAX_MB,
+                    ROUND(SUM(DD.USER_BYTES) / (1024 * 1024), 2) USER_MB
+                FROM
+                    SYS.DBA_DATA_FILES DD
+                GROUP BY
+                    DD.TABLESPACE_NAME
+            ) FILES
+            WHERE FREE.TABLESPACE_NAME = FILES.TABLESPACE_NAME(+)
+        </sql>
+    </tablespace-oracle>
+    <tablespace-mysql>
+        <sql>
+            select
+                UPPER(TABLE_SCHEMA) as tablespaceName,
+                ROUND(SUM(data_length + index_length) / (1024 * 1024), 2) as total,
+                ROUND(SUM(data_length + index_length) / (1024 * 1024), 2) as maxTotal,
+                ROUND(SUM(data_length + index_length) / (1024 * 1024), 2) as used,
+                CONCAT(ROUND(100, 2), '%') as usedPct,
+                CONCAT(ROUND(100, 2), '%') as maxUsedPct
+            from
+                information_schema.TABLES
+            where
+                TABLE_SCHEMA not in ('information_schema', 'performance_schema', 'mysql', 'sys')
+            group by TABLE_SCHEMA
+            order by TABLE_SCHEMA;
+        </sql>
+    </tablespace-mysql>
 
     <service-zt name="整体">
         <sql>select *, round(rand() * 10) as failed from {{db}}</sql>

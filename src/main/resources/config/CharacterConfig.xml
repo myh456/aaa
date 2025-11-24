@@ -7,22 +7,25 @@
         <memory id="2"/>
         <storage id="1"/>
         <weblogic-process id="1"/>
-        <weblogic-service id="1"/>
+<!--        <weblogic-service id="1"/>-->
     </character>
     <character id="3" name="mysql角色">
-<!--        <instance/>-->
+        <instance-mysql id="1"/>
         <expire-mysql id="1"/>
-<!--        <asm/>-->
-<!--        <tablespace/>-->
-        <service-zt id="1"/>
-        <service-sb id="1"/>
+        <tablespace-mysql id="1"/>
     </character>
-    <character id="4" name="mysql角色">
-        <!--        <instance/>-->
-        <!--        <expire/>-->
-        <!--        <asm/>-->
-        <!--        <tablespace/>-->
-        <service-zt id="2"/>
-        <service-sb id="1"/>
+    <character id="4" name="oracle角色">
+        <instance-oracle id="1"/>
+        <expire-oracle id="1"/>
+        <tablespace-oracle id="1"/>
+        <asm-oracle id="1"/>
+    </character>
+    <character id="5" name="vertica角色">
+        <instance-vertica id="1"/>
+        <expire-vertica id="1"/>
+    </character>
+    <character id="6" name="clickhouse角色">
+        <instance-clickhouse id="1"/>
+        <expire-clickhouse id="1"/>
     </character>
 </root>

@@ -54,6 +54,21 @@
         </threshold>
     </expire-mysql>
 
+    <instance-mysql id="1"/>
+    <expire-mysql id="1"/>
+    <tablespace-mysql id="1"/>
+
+    <instance-oracle id="1"/>
+    <expire-oracle id="1"/>
+    <tablespace-oracle id="1"/>
+    <asm-oracle id="1"/>
+
+    <instance-vertica id="1"/>
+    <expire-vertica id="1"/>
+
+    <instance-clickhouse id="1"/>
+    <expire-clickhouse id="1"/>
+
     <service-zt id="1">
         <db-attr>mysql.db</db-attr>
         <threshold>
