@@ -1,0 +1,36 @@
+<word>
+    <title>巡检结果</title>
+    <section for="cpu">
+        <subtitle>CPU巡检结果</subtitle>
+        <text>
+            本次共检查{{total}}台服务器，{{normal}}台正常，{{fail_size}}台连接不上未能巡检，
+            <if notzero="fail_size">
+                ，分别为
+                <foreach from="fail" begin="" end="，" separator="、">
+                    {{key}}
+                </foreach>
+            </if>
+            {{over_size}}台超过阈值
+            <if notzero="over_size">
+                ，分别为
+                <foreach from="over" begin="" end="，" separator="、">
+                    {{key}}
+                </foreach>
+                需要重点关注。
+            </if>
+        </text>
+    </section>
+    <section for="storage">
+        <subtitle>目录巡检结果</subtitle>
+        <text>
+            本次共检查{{total}}个目录，**{{over_size}}**个超过阈值
+            <if notzero="over_size">
+                ，分别为
+                <foreach from="over">
+                    {{key}}服务器下的{{val}}目录
+                </foreach>
+                需要重点关注。
+            </if>
+        </text>
+    </section>
+</word>

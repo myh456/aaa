@@ -44,9 +44,7 @@ public class DatabaseInspectionServiceImpl implements DatabaseInspectionService 
         String password = encryptionUtil.decrypt(attrs.get("password").toString());
         DruidDataSource dataSource = new DruidDataSource();
         switch (attrs.get("type").toString()) {
-            case "mysql5":
             case "mysql":
-            case "mysql8":
                 url = "jdbc:mysql://" + database.get("@ip") + ":" + database.get("@port");
                 dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
                 dataSource.setUrl(url);
@@ -112,6 +110,8 @@ public class DatabaseInspectionServiceImpl implements DatabaseInspectionService 
                         results.get(key).addAll(entities);
                     }
                 } catch (Exception e) {
+                    // 添加失败巡检的数据库基础属性和失败标志
+                    attrs.put("fail", null);
                     results.get(key).add(attrs);
                 }
             }

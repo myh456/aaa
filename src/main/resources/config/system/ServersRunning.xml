@@ -23,14 +23,12 @@
 
     <storage os="linux">
         <cmd>
-            for d in {{path}}; do df "$d" | awk -v d="$d" 'NR==2{gsub(/%/,"",$5);printf "\"filesystem_%s\":\"%s\",\"size_%s\":\"%s\",\"used_%s\":\"%s\",\"avail_%s\":\"%s\",\"use_%s\":\"%s\",\"mounted_%s\":\"%s\",\"dir_%s\":\"%s\",",d,$1,d,$2,d,$3,d,$4,d,$5,d,$6,d,d}'; done | sed 's/,$//' | awk 'BEGIN{printf "{"} {printf $0} END{print "}"}'
+            for d in {{path}}; do df "$d" | awk -v d="$d" 'NR==2{gsub(/%/,"",$5);printf "{ \"filesystem\":\"%s\",\"size\":\"%s\",\"used\":\"%s\",\"avail\":\"%s\",\"use\":\"%s\",\"mounted\":\"%s\",\"dir\":\"%s\" },",$1,$2,$3,$4,$5,$6,d}'; done | sed 's/,$//' | awk 'BEGIN{printf "["} {printf $0} END{printf "]"}'
         </cmd>
-        <res from="use_/" name="use_root"/>
-        <res from="use_/home" name="use_home"/>
     </storage>
     <storage os="aix">
         <cmd>
-            for d in {{path}}; do df "$d" | awk -v d="$d" 'NR==2{size=$2;free=$3;used=size-free;pct=$4;mount=$7;gsub(/%/,"",pct);printf "\"filesystem_%s\":\"%s\",\"size_%s\":\"%s\",\"used_%s\":\"%s\",\"avail_%s\":\"%s\",\"use_%s\":\"%s\",\"mounted_%s\":\"%s\",\"dir_%s\":\"%s\",",d,$1,d,size,d,used,d,free,d,pct,d,mount,d,d}'; done | sed 's/,$//' | awk 'BEGIN{printf "{"} {printf $0} END{print "}"}'
+            for d in {{path}}; do df "$d" | awk -v d="$d" 'NR==2{use=$4; gsub(/%/, "", use);printf "{ \"filesystem\":\"%s\",\"size\":\"%s\",\"used\":\"%s\",\"avail\":\"%s\",\"use\":\"%s\",\"mounted\":\"%s\",\"dir\":\"%s\" },",$1,$2,$3,$4,use,$7,d}'; done | sed 's/,$//' | awk 'BEGIN{printf "["} {printf $0} END{printf "]"}'
         </cmd>
     </storage>
 
@@ -68,7 +66,7 @@
         </cmd>
     </weblogic-service>
 
-    <instance-oracle>
+    <instance type="oracle">
         <sql>
             SELECT
                 A.INSTANCE_NUMBER AS instanceNumber,
@@ -81,8 +79,8 @@
             ORDER BY
                 INSTANCE_NUMBER
         </sql>
-    </instance-oracle>
-    <instance-mysql>
+    </instance>
+    <instance type="mysql">
         <sql>
             SELECT
                 1 AS instanceNumber,
@@ -95,8 +93,8 @@
             WHERE
                 VARIABLE_NAME = 'Uptime';
         </sql>
-    </instance-mysql>
-    <instance-clickhouse>
+    </instance>
+    <instance type="clickhouse">
         <sql>
             SELECT
                 1 AS instanceNumber,
@@ -105,8 +103,8 @@
                 now() - uptime() AS startupTime,
                 'OPEN' AS status
         </sql>
-    </instance-clickhouse>
-    <instance-vertica>
+    </instance>
+    <instance type="vertica">
         <sql>
             WITH latest_states AS (
                 SELECT
@@ -126,9 +124,9 @@
                 LEFT JOIN nodes n ON ls.node_name = n.node_name
             WHERE ls.rn = 1
         </sql>
-    </instance-vertica>
+    </instance>
 
-    <expire-oracle>
+    <expire type="oracle">
         <sql>
             SELECT
                 USERNAME,
@@ -150,8 +148,8 @@
                 AND T.USERNAME NOT LIKE 'SBF\_%' ESCAPE '\'
                 AND T.DEFAULT_TABLESPACE NOT IN ('SYSAUX', 'SYSTEM')
         </sql>
-    </expire-oracle>
-    <expire-mysql>
+    </expire>
+    <expire type="mysql">
         <sql>
             SELECT
                 `USER` USERNAME,
@@ -179,8 +177,8 @@
                 AND `USER` NOT LIKE 'SBF\\_%' ESCAPE '\\'
             ORDER BY `USER`;
         </sql>
-    </expire-mysql>
-    <expire-clickhouse>
+    </expire>
+    <expire type="clickhouse">
         <sql>
             SELECT
                 name AS user_name,
@@ -196,8 +194,8 @@
             FROM system.users
             WHERE name NOT IN ('default');
         </sql>
-    </expire-clickhouse>
-    <expire-vertica>
+    </expire>
+    <expire type="vertica">
         <sql>
             SELECT
                 U.USER_NAME,
@@ -224,9 +222,9 @@
             INNER JOIN V_CATALOG.PROFILES PF
                 ON U.PROFILE_NAME = PF.PROFILE_NAME;
         </sql>
-    </expire-vertica>
+    </expire>
 
-    <asm-oracle>
+    <asm type="oracle">
         <sql>
             SELECT
                 NAME,
@@ -238,9 +236,9 @@
                 END || '%' USE
             FROM V$asm_diskgroup
         </sql>
-    </asm-oracle>
+    </asm>
 
-    <tablespace-oracle>
+    <tablespace type="oracle">
         <sql>
             SELECT
                 UPPER(FREE.TABLESPACE_NAME) AS tablespaceName,
@@ -270,8 +268,8 @@
             ) FILES
             WHERE FREE.TABLESPACE_NAME = FILES.TABLESPACE_NAME(+)
         </sql>
-    </tablespace-oracle>
-    <tablespace-mysql>
+    </tablespace>
+    <tablespace type="mysql">
         <sql>
             select
                 UPPER(TABLE_SCHEMA) as tablespaceName,
@@ -287,7 +285,7 @@
             group by TABLE_SCHEMA
             order by TABLE_SCHEMA;
         </sql>
-    </tablespace-mysql>
+    </tablespace>
 
     <service-zt name="整体">
         <sql>select *, round(rand() * 10) as failed from {{db}}</sql>

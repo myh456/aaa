@@ -137,4 +137,10 @@ public class XmlParserTest {
         });
         System.out.println(servers);
     }
+
+    @Test
+    public void test2() throws DocumentException {
+        Map<String, Object> wordText = xmlParser.parseXml("classpath:config/system/WordText.xml");
+        System.out.println(wordText);
+    }
 }

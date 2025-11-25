@@ -23,7 +23,8 @@ public class XmlParser {
         if (!children.isEmpty()) {
             for (Element child : children) {
                 String tagName = child.getName();
-                Object childValue = parseElement(child); // 递归解析子元素
+                // 递归解析子元素
+                Object childValue = parseElement(child);
 
                 if (map.containsKey(tagName)) {
                     // 检查是否已存在同名元素，如果存在，则转换为 List

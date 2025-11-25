@@ -1,9 +1,14 @@
 server:
   port: 8080
 
-config:
-  path: classpath:config/
+#config:
+#  path: classpath:config/
+#
+#excel:
+#  export:
+#    path: D:/巡检结果/
 
-excel:
-  export:
-    path: D:/巡检结果/
+path:
+  config: classpath:config/
+  excel: D:/export/excel/
+  word: D:/export/word/

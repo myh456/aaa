@@ -26,7 +26,7 @@ public class TestController {
     @Resource
     private InspectionEntityUtil xmlEntityUtil;
 
-    @Value("${excel.export.path}")
+    @Value("${path.excel}")
     private String excelExportPath;
 
     @GetMapping("/test")

@@ -1,6 +1,6 @@
 <root>
     <character id="1" name="第一个角色">
-        <cpu id="1" />
+        <cpu id="1"/>
         <memory id="1"/>
     </character>
     <character id="2" name="第二个角色">
@@ -10,22 +10,22 @@
 <!--        <weblogic-service id="1"/>-->
     </character>
     <character id="3" name="mysql角色">
-        <instance-mysql id="1"/>
-        <expire-mysql id="1"/>
-        <tablespace-mysql id="1"/>
+        <instance id="1"/>
+        <expire id="1"/>
+        <tablespace id="1"/>
     </character>
     <character id="4" name="oracle角色">
-        <instance-oracle id="1"/>
-        <expire-oracle id="1"/>
-        <tablespace-oracle id="1"/>
-        <asm-oracle id="1"/>
+        <instance id="1"/>
+        <expire id="1"/>
+        <tablespace id="1"/>
+        <asm id="1"/>
     </character>
     <character id="5" name="vertica角色">
-        <instance-vertica id="1"/>
-        <expire-vertica id="1"/>
+        <instance id="1"/>
+        <expire id="1"/>
     </character>
     <character id="6" name="clickhouse角色">
-        <instance-clickhouse id="1"/>
-        <expire-clickhouse id="1"/>
+        <instance id="1"/>
+        <expire id="1"/>
     </character>
 </root>

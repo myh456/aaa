@@ -48,26 +48,16 @@
         </threshold>
     </weblogic-service>
 
-    <expire-mysql id="1">
+    <expire id="1">
         <threshold>
             <remaining_days lower="7"/>
         </threshold>
-    </expire-mysql>
+    </expire>
 
-    <instance-mysql id="1"/>
-    <expire-mysql id="1"/>
-    <tablespace-mysql id="1"/>
-
-    <instance-oracle id="1"/>
-    <expire-oracle id="1"/>
-    <tablespace-oracle id="1"/>
-    <asm-oracle id="1"/>
-
-    <instance-vertica id="1"/>
-    <expire-vertica id="1"/>
-
-    <instance-clickhouse id="1"/>
-    <expire-clickhouse id="1"/>
+    <instance id="1"/>
+    <expire id="1"/>
+    <tablespace id="1"/>
+    <asm id="1"/>
 
     <service-zt id="1">
         <db-attr>mysql.db</db-attr>

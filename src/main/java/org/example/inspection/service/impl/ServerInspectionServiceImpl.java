@@ -136,7 +136,8 @@ public class ServerInspectionServiceImpl implements ServerInspectionService {
                     }
                 }
             } catch (Exception e) {
-                // 添加失败巡检的服务器基础属性
+                // 添加失败巡检的服务器基础属性和失败标志
+                attrs.put("fail", null);
                 results.get(k).add(attrs);
             }
         }

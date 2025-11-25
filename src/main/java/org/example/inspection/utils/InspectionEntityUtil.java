@@ -8,18 +8,20 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 巡检配置工具类
  * 用于加工并获取和巡检相关所有配置
  */
 @Component
-@SuppressWarnings("unchecked")
 public class InspectionEntityUtil {
     @Autowired
     private XmlParser xmlParser;
-    @Value("${config.path}")
+    @Value("${path.config}")
     private String configPath;
+    private String currentOS;
 
     @Getter
     private Map<String, Object> cmds;
@@ -42,12 +44,14 @@ public class InspectionEntityUtil {
 
     @PostConstruct
     public void init() throws DocumentException {
+        currentOS = System.getProperty("os.name");
         initConfig();
         initServer();
         initDatabase();
         initExcelConfig();
     }
 
+    @SuppressWarnings("unchecked")
     public void initConfig() throws DocumentException {
         // 初始化命令配置
         cmds = new HashMap<>();
@@ -121,6 +125,7 @@ public class InspectionEntityUtil {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void initServer() throws DocumentException {
         Map<String, Object> serversMap = xmlParser.parseXml(configPath + "ServersConfig.xml");
         servers = new ArrayList<>();
@@ -130,6 +135,7 @@ public class InspectionEntityUtil {
         } else {
             serverList = (List<Object>) serversMap.get("server");
         }
+        // 获取服务器信息
         for (Object item : serverList) {
             Map<String, Object> check = (Map<String, Object>) item;
             Map<String, Object> server = new HashMap<>();
@@ -160,6 +166,14 @@ public class InspectionEntityUtil {
                     }
                 });
             }
+            // 获取服务器属性
+            Map<String, Object> attrs = new HashMap<>();
+            attrs.put("@currentOS", currentOS);
+            server.forEach((k, v) -> {
+                if (k.startsWith("@")) {
+                    attrs.put(k, v);
+                }
+            });
             // 将命令插入服务器配置
             server.forEach((k, v) -> {
                 if (k.startsWith("@")) {
@@ -190,10 +204,23 @@ public class InspectionEntityUtil {
                     if (cmd instanceof Map) {
                         ((Map<String, Object>) v).putAll((Map<String, Object>) cmd);
                     } else {
-                        for (Object c : (List<Object>) cmd) {
-                            if (((Map<String, Object>) c).get("@os").equals(server.get("@os"))) {
-                                ((Map<String, Object>) v).putAll((Map<String, Object>) c);
-                                break;
+                        // 根据attrs进行过滤，取出attrs和cmd中相同的键，值相同的命令
+                        Map<String, Object> cc = ((List<Map<String, Object>>) cmd).stream()
+                                .filter(c -> attrs.entrySet().stream()
+                                        .allMatch(attr ->
+                                                !c.containsKey(attr.getKey()) ||
+                                                        Objects.equals(c.get(attr.getKey()), attr.getValue())
+                                        ))
+                                .findFirst()
+                                .orElse(null);
+                        if (cc == null) {
+                            return;
+                        }
+                        ((Map<String, Object>) v).putAll(cc);
+                        // 将服务器属性继承到巡检项
+                        for(String ka: attrs.keySet()) {
+                            if(!((Map<String, Object>) v).containsKey(ka)) {
+                                ((Map<String, Object>) v).put(ka, attrs.get(ka));
                             }
                         }
                     }
@@ -224,6 +251,20 @@ public class InspectionEntityUtil {
                             cmds.add(cmdTemp);
                         }
                         ((Map<String, Object>) v).put("cmd", cmds);
+                    } else {
+                        // 判断命令中是否设置变量，尝试使用已有属性自动赋值
+                        cmd = ((Map<String, Object>) v).get("cmd").toString();
+                        String pattern = "\\{\\{.*?}}";
+                        Pattern p = Pattern.compile(pattern);
+                        Matcher m = p.matcher(cmd.toString());
+                        if (m.find()) {
+                            for(String var: attrs.keySet()) {
+                                if (cmd.toString().contains(String.format("{{%s}}", var))) {
+                                    cmd = cmd.toString().replace(String.format("{{%s}}", var), attrs.get(var).toString());
+                                }
+                            }
+                            ((Map<String, Object>) v).put("cmd", cmd);
+                        }
                     }
                 }
             });
@@ -231,6 +272,7 @@ public class InspectionEntityUtil {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void initDatabase() throws DocumentException {
         Map<String, Object> databaseMap = xmlParser.parseXml(configPath + "DatabaseConfig.xml");
         databases = new ArrayList<>();
@@ -270,6 +312,14 @@ public class InspectionEntityUtil {
                     }
                 });
             }
+            // 获取数据库属性
+            Map<String, Object> attrs = new HashMap<>();
+            attrs.put("@currentOS", currentOS);
+            database.forEach((k, v) -> {
+                if (k.startsWith("@")) {
+                    attrs.put(k, v);
+                }
+            });
             // 将sql插入数据库配置
             Map<String, Object> databaseTemp = new HashMap<>(database);
             databaseTemp.forEach((k, v) -> {
@@ -286,6 +336,7 @@ public class InspectionEntityUtil {
                     if (sqls.containsKey(k)) {
                         // 保存数据库配置的变量
                         Map<String, List<String>> databaseVars = new HashMap<>();
+                        List<Map<String, String>> databaseMultiVars = new ArrayList<>();
                         ((Map<String, Object>) v).forEach((k1, v1) -> {
                             if (k1.endsWith("-attr")) {
                                 String attr = k1.substring(0, k1.length() - 5);
@@ -294,6 +345,12 @@ public class InspectionEntityUtil {
                                 } else {
                                     databaseVars.put(attr, Collections.singletonList(v1.toString()));
                                 }
+                            } else if ("attrs".equals(k1)) {
+                                if (v1 instanceof List) {
+                                    databaseMultiVars.addAll((List<Map<String, String>>) v1);
+                                } else {
+                                    databaseMultiVars.add((Map<String, String>) v1);
+                                }
                             }
                         });
                         // 获取并插入sql
@@ -301,10 +358,23 @@ public class InspectionEntityUtil {
                         if (sql instanceof Map) {
                             ((Map<String, Object>) v).putAll((Map<String, Object>) sql);
                         } else {
-                            for (Object s : (List<Object>) sql) {
-                                if (((Map<String, Object>) s).get("@name").equals(database.get("@name"))) {
-                                    ((Map<String, Object>) v).putAll((Map<String, Object>) s);
-                                    break;
+                            // 根据attrs进行过滤，取出attrs和sql中相同的键，值相同的命令
+                            Map<String, Object> cc = ((List<Map<String, Object>>) sql).stream()
+                                    .filter(c -> attrs.entrySet().stream()
+                                            .allMatch(attr ->
+                                                    !c.containsKey(attr.getKey()) ||
+                                                            Objects.equals(c.get(attr.getKey()), attr.getValue())
+                                            ))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (cc == null) {
+                                return;
+                            }
+                            ((Map<String, Object>) v).putAll(cc);
+                            // 将数据库属性继承到巡检项
+                            for(String ka: attrs.keySet()) {
+                                if(!((Map<String, Object>) v).containsKey(ka)) {
+                                    ((Map<String, Object>) v).put(ka, attrs.get(ka));
                                 }
                             }
                         }
@@ -320,6 +390,37 @@ public class InspectionEntityUtil {
                                 }
                             }
                             ((Map<String, Object>) v).put("sql", sqls);
+                        } else if (!databaseMultiVars.isEmpty()) {
+                            sql = ((Map<String, Object>) v).get("sql").toString();
+                            if (!databaseMultiVars.isEmpty()) {
+                                List<String> sqls = new ArrayList<>();
+                                for (Map<String, String> vars : databaseMultiVars) {
+                                    String sqlTemp = sql.toString();
+                                    for(Map.Entry<String, String> varsEntry : vars.entrySet()) {
+                                        String var = varsEntry.getKey();
+                                        String val = varsEntry.getValue();
+                                        if(sql.toString().contains(String.format("{{%s}}", var))) {
+                                            sqlTemp = sqlTemp.replace(String.format("{{%s}}", var), val);
+                                        }
+                                    }
+                                    sqls.add(sqlTemp);
+                                }
+                                ((Map<String, Object>) v).put("sql", sqls);
+                            }
+                        } else {
+                            // 判断命令中是否设置变量，尝试使用已有属性自动赋值
+                            sql = ((Map<String, Object>) v).get("sql");
+                            String pattern = "\\{\\{.*?}}";
+                            Pattern p = Pattern.compile(pattern);
+                            Matcher m = p.matcher(sql.toString());
+                            if (m.find()) {
+                                for(String var: attrs.keySet()) {
+                                    if (sql.toString().contains(String.format("{{%s}}", var))) {
+                                        sql = sql.toString().replace(String.format("{{%s}}", var), attrs.get(var).toString());
+                                    }
+                                }
+                                ((Map<String, Object>) v).put("sql", sql);
+                            }
                         }
                     }
                 }

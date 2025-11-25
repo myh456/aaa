@@ -19,6 +19,7 @@ public class InspectionServiceTest {
     @Test
     public void test() {
         Map<String, List<Object>> res =  inspectionService.inspection();
+        System.out.println(JSONObject.toJSONString(res));
         res.forEach((k, v) -> {
             System.out.println("============");
             System.out.println(k + ": ");
