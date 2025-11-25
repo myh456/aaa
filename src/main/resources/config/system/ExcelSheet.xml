@@ -13,7 +13,6 @@
                     <cell from="wa" name="wa杀神风" width="20"/>
                 </cell>
             </row>
-            <extract key="ip"/>
         </table>
     </sheet>
     <sheet name="服务器内存巡检">
@@ -26,21 +25,6 @@
                 <cell from="ip" name="IP" width="15"/>
                 <cell from="us" name="内存使用率us" width="15"/>
             </row>
-            <extract key="ip"/>
-        </table>
-    </sheet>
-    <sheet name="服务器存储巡检">
-        <table>
-            <title>
-                服务器物理存储巡检结果
-            </title>
-            <row>
-                <cell from="name" name="服务器名称" width="20"/>
-                <cell from="ip" name="IP" width="15"/>
-                <cell from="dir" name="目录" width="15"/>
-                <cell from="use" name="使用率" width="15"/>
-            </row>
-            <extract key="ip" val="dir"/>
         </table>
     </sheet>
     <sheet name="业务量">
