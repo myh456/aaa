@@ -10,10 +10,7 @@ import javax.annotation.PostConstruct;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,12 +69,12 @@ public class WordTextUtil {
      * 用于将巡检结果转word
      * @param data 巡检结果
      */
-    public void parse(Map<String, Object> data) {
+    public void parse(Map<String, Object> data, String fileName) {
         Element root = document.getRootElement();
 
         StringBuilder sb = new StringBuilder();
         processNodes(root.content(), data, sb);
-        wordConverter.convertFromMd(sb.toString().trim());
+        wordConverter.convertFromMd(sb.toString().trim(), fileName);
     }
 
     /**

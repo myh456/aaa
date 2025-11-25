@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ public class InspectionServiceTest {
 
     @Test
     public void test() {
-        Map<String, List<Object>> res =  inspectionService.inspection();
+        Map<String, List<Object>> res =  inspectionService.inspection(new Date());
         System.out.println(JSONObject.toJSONString(res));
         res.forEach((k, v) -> {
             System.out.println("============");

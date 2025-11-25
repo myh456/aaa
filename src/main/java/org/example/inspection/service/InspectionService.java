@@ -1,5 +1,6 @@
 package org.example.inspection.service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -8,7 +9,5 @@ import java.util.Map;
  */
 public interface InspectionService {
 
-    void init();
-
-    Map<String, List<Object>> inspection();
+    Map<String, List<Object>> inspection(Date startTime);
 }

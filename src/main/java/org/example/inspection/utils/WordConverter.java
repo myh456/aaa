@@ -24,7 +24,7 @@ public class WordConverter {
     private final int FONT_SIZE_BODY = 14; // 四号
     private final String FONT_FAMILY = "宋体";
 
-    public void convertFromMd(String mdContent) {
+    public void convertFromMd(String mdContent, String fileName) {
         try (XWPFDocument document = new XWPFDocument()) {
 
             // 按行分割字符串
@@ -50,7 +50,7 @@ public class WordConverter {
                     createBodyParagraph(document, text);
                 }
             }
-            String outputPath = wordPath + "output.docx";
+            String outputPath = wordPath + fileName + ".docx";
             File file = new File(outputPath);
             if (!file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();

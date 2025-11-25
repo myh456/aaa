@@ -38,26 +38,17 @@
         </cmd>
     </docker>
 
-    <ogg os="linux">
+    <ogg>
         <cmd>
         <![CDATA[
-            ggsci -s "info {{process_path}}" | awk 'NR==1{for(i=1;i<=NF;i++)h[i]=$i} NR==2{printf "{"; for(i=1;i<=NF;i++){printf "\""h[i]"\": \""$i"\""; if(i<NF)printf ", "} print "}"}'
-        ]]>
-        </cmd>
-    </ogg>
-    <ogg os="aix">
-        <cmd>
-        <![CDATA[
-            ggsci << EOF | awk 'NR==1{for(i=1;i<=NF;i++)h[i]=$i} NR==2{printf "{"; for(i=1;i<=NF;i++){printf "\""h[i]"\": \""$i"\""; if(i<NF)printf ", "} print "}"}'
-            info {{process_path}}
-            EOF
+            ggsci -s "info all" | awk 'BEGIN{output="[";header_saved=0}/Program/{if(header_saved==0){for(i=1;i<=NF;i++){h[i]=$i}header_saved=1;next}}/MANAGER/{next}/PROCESS/{next}/^$/{next}/No/{next}header_saved==1{if(length(output)>1){output=output ", "}json="{";for(i=1;i<=NF;i++){if(h[i]=="Lag"){json=json "\""h[i]"\": \""$i"\", ";json=json "\"at Chkpt\": \""" $(i+1) " " $(i+2) "\", ";json=json "\"Time Since Chkpt\": \""" $(i+3) " " $(i+4) " " $(i+5) "\"";break}else if(h[i]=="at"||h[i]=="Chkpt"||h[i]=="Time"||h[i]=="Since"){next}json=json "\""h[i]"\": \""$i"\"";if(i<NF){json=json ", "}}output=output json "}"}END{print output "]"}'
         ]]>
         </cmd>
     </ogg>
 
     <weblogic-process>
         <cmd>
-            ps -ef | grep root | grep -v grep | awk 'BEGIN{printf "["} {if(NR>1)printf ","; printf "{\"user\":\"%s\",\"pid\":%s,\"ppid\":%s,\"start\":\"%s\",\"time\":\"%s\",\"command\":\"%s\"}", $1, $2, $3, $5, $7, substr($0, index($0,$8))} END{print "]"}'
+            ps -ef | grep weblogic.Server | grep -v grep | awk 'BEGIN{printf "["} {if(NR>1)printf ","; printf "{\"user\":\"%s\",\"pid\":%s,\"ppid\":%s,\"start\":\"%s\",\"time\":\"%s\",\"command\":\"%s\"}", $1, $2, $3, $5, $7, substr($0, index($0,$8))} END{print "]"}'
         </cmd>
     </weblogic-process>
     <weblogic-service>

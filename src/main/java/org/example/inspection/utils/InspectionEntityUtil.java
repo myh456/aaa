@@ -45,6 +45,11 @@ public class InspectionEntityUtil {
     @PostConstruct
     public void init() throws DocumentException {
         currentOS = System.getProperty("os.name");
+        if(currentOS.toLowerCase().contains("win")) {
+            currentOS = "win";
+        } else {
+            currentOS = "linux";
+        }
         initConfig();
         initServer();
         initDatabase();

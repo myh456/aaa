@@ -48,8 +48,7 @@ public class WordUtilTest {
                 "  }\n" +
                 "}");
         Map<String, Object> data = json.toJavaObject(Map.class);
-
-        wordTextUtil.parse(data);
+        wordTextUtil.parse(data, "巡检_defrgtb");
     }
 
     @Test

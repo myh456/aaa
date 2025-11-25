@@ -23,17 +23,12 @@ public class InspectionServiceImpl implements InspectionService {
     @Resource
     private ServerInspectionService serverInspectionService;
 
-    private Date startTime;
     private final String checker = "神州数码";
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH.mm.ss");
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-    @PostConstruct
-    public void init() {
-        startTime = new Date();
-    }
-
-    public Map<String, List<Object>> inspection() {
+    @Override
+    public Map<String, List<Object>> inspection(Date startTime) {
         String time = timeFormat.format(startTime);
         String date = dateFormat.format(startTime);
         Map<String, List<Object>> results = new HashMap<>();
