@@ -1,7 +1,6 @@
 package org.example.inspection.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import org.dom4j.DocumentException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,18 +14,15 @@ import java.util.*;
 public class WordUtilTest {
     @Autowired
     private WordTextUtil wordTextUtil;
-    @Autowired
-    private WordConverter wordConverter;
-    private JSONObject json;
 
     @Test
-    public void test() throws DocumentException {
+    public void test() {
         JSONObject json = JSONObject.parseObject("{\n" +
                 "  \"cpu\": {\n" +
                 "    \"total\": 10,\n" +
                 "    \"normal\": 8,\n" +
-                "    \"failed_size\": 2,\n" +
-                "    \"failed\": [\n" +
+                "    \"fail_size\": 2,\n" +
+                "    \"fail\": [\n" +
                 "      {\"192.168.0.1\": null},\n" +
                 "      {\"192.168.0.2\": null}\n" +
                 "    ],\n" +
@@ -39,8 +35,8 @@ public class WordUtilTest {
                 "  \"storage\": {\n" +
                 "    \"total\": 16,\n" +
                 "    \"normal\": 14,\n" +
-                "    \"failed_size\": 2,\n" +
-                "    \"failed\": [\n" +
+                "    \"fail_size\": 2,\n" +
+                "    \"fail\": [\n" +
                 "      {\"192.168.0.1\": \"/\"},\n" +
                 "      {\"192.168.0.1\": \"/weblogic\"}\n" +
                 "    ],\n" +
@@ -54,5 +50,11 @@ public class WordUtilTest {
         Map<String, Object> data = json.toJavaObject(Map.class);
 
         wordTextUtil.parse(data);
+    }
+
+    @Test
+    public void test2() {
+        System.out.println(wordTextUtil.getExtract("cpu"));
+        System.out.println(wordTextUtil.getExtract("storage"));
     }
 }

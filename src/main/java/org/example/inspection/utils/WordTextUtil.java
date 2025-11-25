@@ -6,10 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,10 +24,14 @@ public class WordTextUtil {
     @Autowired
     private WordConverter wordConverter;
 
+    private Document document;
+    private Map<String, Map<String, String>> extract;
+
     // 用于匹配 {{key}} 的正则
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{\\{(.*?)}}");
 
-    public void parse(Map<String, Object> data) throws DocumentException {
+    @PostConstruct
+    public void init() throws DocumentException {
         String xmlPath = configPath + "/system/WordText.xml";
         SAXReader reader = new SAXReader();
         InputStream is;
@@ -39,7 +44,35 @@ public class WordTextUtil {
             System.err.println("Error opening file: " + xmlPath);
             return;
         }
-        Document document = reader.read(is);
+        document = reader.read(is);
+        extract = new HashMap<>();
+        Element element = document.getRootElement();
+        List<Element> children = element.elements();
+        children.forEach(elem -> {
+            try {
+                String tagName = elem.getName();
+                if ("section".equals(tagName)) {
+                    Element ext = elem.element("extract");
+                    String key = ext.attributeValue("key");
+                    String val = ext.attributeValue("val");
+                    Map<String, String> e = new HashMap<>();
+                    e.put("key", key);
+                    e.put("val", val);
+                    extract.put(elem.attributeValue("for"), e);
+                }
+            } catch (Exception ignored) {}
+        });
+    }
+
+    public Map<String, String> getExtract(String forName) {
+        return extract.get(forName);
+    }
+
+    /**
+     * 用于将巡检结果转word
+     * @param data 巡检结果
+     */
+    public void parse(Map<String, Object> data) {
         Element root = document.getRootElement();
 
         StringBuilder sb = new StringBuilder();
@@ -64,6 +97,8 @@ public class WordTextUtil {
                 String tagName = element.getName();
 
                 switch (tagName) {
+                    case "extract":
+                        break;
                     case "title":
                         sb.append("# ").append(element.getTextTrim()).append("\n");
                         break;

@@ -1,6 +1,7 @@
 <word>
     <title>巡检结果</title>
     <section for="cpu">
+        <extract key="ip"/>
         <subtitle>CPU巡检结果</subtitle>
         <text>
             本次共检查{{total}}台服务器，{{normal}}台正常，{{fail_size}}台连接不上未能巡检，
@@ -21,6 +22,7 @@
         </text>
     </section>
     <section for="storage">
+        <extract key="ip" val="dir"/>
         <subtitle>目录巡检结果</subtitle>
         <text>
             本次共检查{{total}}个目录，**{{over_size}}**个超过阈值
