@@ -214,10 +214,10 @@ public class InspectionEntityUtil {
                         List<String> cmds = new ArrayList<>();
                         for (Map<String, String> vars : serverMultiVars) {
                             String cmdTemp = cmd.toString();
-                            for(Map.Entry<String, String> varsEntry : vars.entrySet()) {
+                            for (Map.Entry<String, String> varsEntry : vars.entrySet()) {
                                 String var = varsEntry.getKey();
                                 String val = varsEntry.getValue();
-                                if(cmd.toString().contains(String.format("{{%s}}", var))) {
+                                if (cmd.toString().contains(String.format("{{%s}}", var))) {
                                     cmdTemp = cmdTemp.replace(String.format("{{%s}}", var), val);
                                 }
                             }
@@ -368,7 +368,7 @@ public class InspectionEntityUtil {
                 }
             }
         }
-
+        // 向所有标题添加通用字段
         for (Map<String, String> headerMap : result.values()) {
             headerMap.put("checker", "巡检人");
             headerMap.put("date", "巡检日期");
@@ -417,20 +417,14 @@ public class InspectionEntityUtil {
      */
     private void processTable(Map<String, Map<String, String>> result, Map<String, Object> table, boolean isMultiple) {
         String forKey = (String) table.get("@for");
-        if (forKey == null) {
+        Map<String, Object> row = extractTableRow(forKey, table);
+        if (row == null) {
             return;
         }
-        Object rowObj = table.get("row");
-        if (!(rowObj instanceof Map)) {
-            return;
-        }
-        Map<String, Object> row = (Map<String, Object>) rowObj;
         Map<String, String> headerMap = new LinkedHashMap<>();
         Object cellObj = row.get("cell");
-        
         // 统一处理单元格，无论是一个还是多个
         processCells(headerMap, cellObj);
-        
         // 根据是单表还是多表情况确定键
         // String key = isMultiple ? "service#" + forKey : forKey;
         result.put(forKey, headerMap);
@@ -445,21 +439,196 @@ public class InspectionEntityUtil {
      */
     private void processTableWithConfig(Map<String, ExcelHeaderConfig> result, Map<String, Object> table, boolean isMultiple) {
         String forKey = (String) table.get("@for");
-        if (forKey == null) {
+        Map<String, Object> row = extractTableRow(forKey, table);
+        if (row == null) {
             return;
+        }
+        ExcelHeaderConfig headerConfig = new ExcelHeaderConfig();
+        // 计算表头的最大深度
+        int maxDepth = calculateMaxDepth(row.get("cell"));
+        headerConfig.setHeaderRowCount(maxDepth);
+
+        // 处理通用字段的列索引，紧跟在配置字段后面
+        int fieldCount = calculateFieldCount(row.get("cell"));
+        headerConfig.setFieldIndex("checker", fieldCount);
+        headerConfig.setFieldIndex("date", fieldCount + 1);
+        headerConfig.setFieldIndex("time", fieldCount + 2);
+        // 设置通用字段的宽度为20
+        headerConfig.setColumnWidth(fieldCount, 20);
+        headerConfig.setColumnWidth(fieldCount + 1, 20);
+        headerConfig.setColumnWidth(fieldCount + 2, 20);
+        Object cellObj = row.get("cell");
+        // 统一处理单元格，无论是一个还是多个
+        processCellsWithConfig(headerConfig, cellObj, new int[]{0}, 0, maxDepth); // 使用数组来跟踪列索引
+        result.put(forKey, headerConfig);
+    }
+
+    /**
+     * 提取表的行数据
+     *
+     * @param forKey 表key
+     * @param table  表元素
+     * @return 行数据，如果表无效则返回null
+     */
+    private Map<String, Object> extractTableRow(String forKey, Map<String, Object> table) {
+        if (forKey == null) {
+            return null;
         }
         Object rowObj = table.get("row");
         if (!(rowObj instanceof Map)) {
-            return;
+            return null;
         }
-        Map<String, Object> row = (Map<String, Object>) rowObj;
-        ExcelHeaderConfig headerConfig = new ExcelHeaderConfig();
-        Object cellObj = row.get("cell");
-        
-        // 统一处理单元格，无论是一个还是多个
-        processCellsWithConfig(headerConfig, cellObj, new int[]{0}); // 使用数组来跟踪列索引
-        
-        result.put(forKey, headerConfig);
+        return (Map<String, Object>) rowObj;
+    }
+
+    /**
+     * 计算单元格的最大嵌套深度
+     *
+     * @param cellObj 单元格对象
+     * @return 最大深度
+     */
+    private int calculateMaxDepth(Object cellObj) {
+        if (cellObj == null) {
+            return 1;
+        }
+        int maxDepth = 1;
+        if (cellObj instanceof List) {
+            List<Map<String, Object>> cells = (List<Map<String, Object>>) cellObj;
+            for (Map<String, Object> cell : cells) {
+                Object nestedCellObj = cell.get("cell");
+                if (nestedCellObj != null) {
+                    maxDepth = Math.max(maxDepth, 1 + calculateMaxDepth(nestedCellObj));
+                }
+            }
+        } else if (cellObj instanceof Map) {
+            Map<String, Object> cell = (Map<String, Object>) cellObj;
+            Object nestedCellObj = cell.get("cell");
+            if (nestedCellObj != null) {
+                maxDepth = Math.max(maxDepth, 1 + calculateMaxDepth(nestedCellObj));
+            }
+        }
+        return maxDepth;
+    }
+
+    /**
+     * 计算字段数量（不包括嵌套字段）
+     *
+     * @param cellObj 单元格对象
+     * @return 字段数量
+     */
+    private int calculateFieldCount(Object cellObj) {
+        if (cellObj == null) {
+            return 0;
+        }
+        int count = 0;
+        if (cellObj instanceof List) {
+            List<Map<String, Object>> cells = (List<Map<String, Object>>) cellObj;
+            for (Map<String, Object> cell : cells) {
+                Object nestedCellObj = cell.get("cell");
+                if (nestedCellObj != null) {
+                    count += calculateFieldCount(nestedCellObj);
+                } else {
+                    // 没有嵌套单元格，这是一个字段
+                    count++;
+                }
+            }
+        } else if (cellObj instanceof Map) {
+            Map<String, Object> cell = (Map<String, Object>) cellObj;
+            Object nestedCellObj = cell.get("cell");
+            if (nestedCellObj != null) {
+                count += calculateFieldCount(nestedCellObj);
+            } else {
+                // 没有嵌套单元格，这是一个字段
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 处理单元格列表或单个单元格（带配置）
+     *
+     * @param headerConfig 要填充的表头配置
+     * @param cellObj      单元格对象或单元格列表
+     * @param columnIndex  列索引计数器（使用数组以便在递归中修改）
+     * @param currentDepth 当前深度
+     * @param maxDepth     最大深度
+     */
+    private void processCellsWithConfig(ExcelHeaderConfig headerConfig, Object cellObj, int[] columnIndex, int currentDepth, int maxDepth) {
+        if (cellObj instanceof List) {
+            // 多个单元格
+            List<Map<String, Object>> cells = (List<Map<String, Object>>) cellObj;
+            for (Map<String, Object> cell : cells) {
+                processCellWithConfig(headerConfig, cell, columnIndex, currentDepth, maxDepth);
+            }
+        } else if (cellObj instanceof Map) {
+            // 单个单元格
+            processCellWithConfig(headerConfig, (Map<String, Object>) cellObj, columnIndex, currentDepth, maxDepth);
+        }
+    }
+
+    /**
+     * 处理单元格元素以提取字段配置
+     *
+     * @param headerConfig 要填充的表头配置
+     * @param cell         要处理的单元格元素
+     * @param columnIndex  列索引计数器
+     * @param currentDepth 当前深度
+     * @param maxDepth     最大深度
+     */
+    private void processCellWithConfig(ExcelHeaderConfig headerConfig, Map<String, Object> cell, int[] columnIndex, int currentDepth, int maxDepth) {
+        String from = (String) cell.get("@from");
+        String name = (String) cell.get("@name");
+        // 处理嵌套单元格（合并单元格情况）
+        Object nestedCellObj = cell.get("cell");
+        if (nestedCellObj != null) {
+            // 有子单元格的情况
+            int startCol = columnIndex[0];
+            // 计算子单元格数量
+            int childCount = getChildCount(nestedCellObj);
+            // 如果当前是表头的第一行，需要合并单元格（水平合并）
+            if (currentDepth == 0 && name != null && childCount > 1) {
+                // 在第一行添加合并单元格 (仅当子节点数量大于1时才合并)
+                headerConfig.addMergedCell(0, 0, startCol, startCol + childCount - 1, name);
+            }
+            // 处理嵌套的单元格
+            processCellsWithConfig(headerConfig, nestedCellObj, columnIndex, currentDepth + 1, maxDepth);
+        } else {
+            // 没有子单元格的情况
+            if (from != null && name != null) {
+                headerConfig.setFieldIndex(from, columnIndex[0]);
+                // 如果表头有多行，需要纵向合并（仅当跨越多行时才合并）
+                if (maxDepth > 1 && currentDepth < maxDepth - 1) {
+                    headerConfig.addMergedCell(currentDepth, maxDepth - 1, columnIndex[0], columnIndex[0], name);
+                }
+                // 处理列宽
+                Object widthObj = cell.get("@width");
+                if (widthObj != null) {
+                    try {
+                        int width = Integer.parseInt(widthObj.toString());
+                        headerConfig.setColumnWidth(columnIndex[0], width);
+                    } catch (NumberFormatException e) {
+                        // 忽略无效的宽度值
+                    }
+                }
+                columnIndex[0]++;
+            }
+        }
+    }
+
+    /**
+     * 获取子单元格数量
+     *
+     * @param cellObj 单元格对象
+     * @return 子单元格数量
+     */
+    private int getChildCount(Object cellObj) {
+        if (cellObj instanceof List) {
+            return ((List<?>) cellObj).size();
+        } else if (cellObj instanceof Map) {
+            return 1;
+        }
+        return 0;
     }
 
     /**
@@ -482,26 +651,6 @@ public class InspectionEntityUtil {
     }
 
     /**
-     * 处理单元格列表或单个单元格（带配置）
-     *
-     * @param headerConfig 要填充的表头配置
-     * @param cellObj      单元格对象或单元格列表
-     * @param columnIndex  列索引计数器（使用数组以便在递归中修改）
-     */
-    private void processCellsWithConfig(ExcelHeaderConfig headerConfig, Object cellObj, int[] columnIndex) {
-        if (cellObj instanceof List) {
-            // 多个单元格
-            List<Map<String, Object>> cells = (List<Map<String, Object>>) cellObj;
-            for (Map<String, Object> cell : cells) {
-                processCellWithConfig(headerConfig, cell, columnIndex);
-            }
-        } else if (cellObj instanceof Map) {
-            // 单个单元格
-            processCellWithConfig(headerConfig, (Map<String, Object>) cellObj, columnIndex);
-        }
-    }
-
-    /**
      * 处理单元格元素以提取字段映射
      *
      * @param headerMap 要填充的表头映射
@@ -516,65 +665,5 @@ public class InspectionEntityUtil {
         // 处理嵌套单元格
         Object nestedCellObj = cell.get("cell");
         processCells(headerMap, nestedCellObj);
-    }
-
-    /**
-     * 处理单元格元素以提取字段配置
-     *
-     * @param headerConfig 要填充的表头配置
-     * @param cell         要处理的单元格元素
-     * @param columnIndex  列索引计数器
-     */
-    private void processCellWithConfig(ExcelHeaderConfig headerConfig, Map<String, Object> cell, int[] columnIndex) {
-        String from = (String) cell.get("@from");
-        String name = (String) cell.get("@name");
-        
-        // 处理列宽
-        Object widthObj = cell.get("@width");
-        if (widthObj != null) {
-            try {
-                int width = Integer.parseInt(widthObj.toString());
-                headerConfig.setColumnWidth(columnIndex[0], width);
-            } catch (NumberFormatException e) {
-                // 忽略无效的宽度值
-            }
-        }
-        
-        if (from != null && name != null) {
-            headerConfig.setFieldIndex(from, columnIndex[0]);
-            columnIndex[0]++;
-        }
-        
-        // 处理嵌套单元格（合并单元格情况）
-        Object nestedCellObj = cell.get("cell");
-        if (nestedCellObj != null) {
-            int startCol = columnIndex[0];
-            
-            // 处理嵌套的单元格
-            if (nestedCellObj instanceof List) {
-                List<Map<String, Object>> nestedCells = (List<Map<String, Object>>) nestedCellObj;
-                for (Map<String, Object> nestedCell : nestedCells) {
-                    String nestedFrom = (String) nestedCell.get("@from");
-                    String nestedName = (String) nestedCell.get("@name");
-                    if (nestedFrom != null && nestedName != null) {
-                        headerConfig.setFieldIndex(nestedFrom, columnIndex[0]);
-                        columnIndex[0]++;
-                    }
-                }
-            } else if (nestedCellObj instanceof Map) {
-                Map<String, Object> nestedCell = (Map<String, Object>) nestedCellObj;
-                String nestedFrom = (String) nestedCell.get("@from");
-                String nestedName = (String) nestedCell.get("@name");
-                if (nestedFrom != null && nestedName != null) {
-                    headerConfig.setFieldIndex(nestedFrom, columnIndex[0]);
-                    columnIndex[0]++;
-                }
-            }
-            
-            // 如果有嵌套单元格，添加合并单元格信息
-            if (columnIndex[0] > startCol && name != null) {
-                headerConfig.addMergedCell(startCol, columnIndex[0] - 1, name);
-            }
-        }
     }
 }

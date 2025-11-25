@@ -8,15 +8,15 @@
                 <cell from="name" name="服务器名称" width="20"/>
                 <cell from="us" name="CPU使用率us" width="15"/>
                 <cell from="id" name="CPU空闲率id" width="15"/>
-                <cell name="合并" width="25">
-                    <cell from="sy" name="sy阿斯达"/>
-                    <cell from="wa" name="wa杀神风"/>
+                <cell name="合并">
+                    <cell from="sy" name="sy阿斯达" width="15"/>
+                    <cell from="wa" name="wa杀神风" width="20"/>
                 </cell>
             </row>
         </table>
     </sheet>
     <sheet name="服务器内存巡检">
-        <table>
+        <table for="memory">
             <title>
                 服务器物理内存巡检结果
             </title>
@@ -46,7 +46,26 @@
                 <cell from="Host" name="D数量" width="15"/>
                 <cell from="Db" name="E数量" width="15"/>
                 <cell from="User" name="F数量" width="15"/>
-                <cell from="g" name="G数量" width="15"/>
+                <cell name="G数量">
+                    <cell from="g1" name="G1数量" width="15"/>
+                    <cell from="g2" name="G2数量" width="15"/>
+                </cell>
+                <cell name="M数量">
+                    <cell from="m1" name="m1数量" width="15"/>
+                    <cell from="m2" name="m2数量" width="15"/>
+                </cell>
+            </row>
+        </table>
+        <table for="service-zt">
+            <title>
+                业务量3
+            </title>
+            <row>
+                <cell from="Host" name="H数量" width="15"/>
+                <cell from="Db" name="I数量" width="15"/>
+                <cell from="User" name="J数量" width="15"/>
+                <cell from="K" name="K数量" width="15"/>
+                <cell from="L" name="L数量" width="15"/>
             </row>
         </table>
     </sheet>
