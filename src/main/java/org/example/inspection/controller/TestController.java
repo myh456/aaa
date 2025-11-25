@@ -1,13 +1,18 @@
 package org.example.inspection.controller;
 
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
+import com.google.common.collect.Lists;
+import org.example.inspection.service.InspectionService;
 import org.example.inspection.utils.ExcelHeaderConfig;
 import org.example.inspection.utils.InspectionEntityUtil;
+import org.example.inspection.utils.WordTextUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +26,10 @@ public class TestController {
 
     @Resource
     private InspectionEntityUtil xmlEntityUtil;
+    @Resource
+    private WordTextUtil wordTextUtil;
+    @Resource
+    private InspectionService inspectionService;
 
     @Value("${path.excel}")
     private String excelExportPath;
@@ -30,9 +39,10 @@ public class TestController {
         String res = "";
         try {
             // 生成带时间戳的文件名
-            String timestamp = DateUtil.format(new Date(), "yyyyMMddHHmm");
-            String fileName = "巡检_" + timestamp + ".xlsx";
-            String filePath = excelExportPath + fileName;
+            DateTime date = DateUtil.date();
+            String timestamp = DateUtil.format(date, "yyyyMMddHHmm");
+            String fileName = StrUtil.format("巡检_{}", timestamp);
+            String filePath = StrUtil.format("{}{}.xlsx", excelExportPath, fileName);
 
             // 确保目录存在
             File directory = new File(excelExportPath);
@@ -49,7 +59,10 @@ public class TestController {
             ExcelWriter writer = ExcelUtil.getWriter(filePath);
             // 删除默认的sheet1工作表
             writer.getWorkbook().removeSheetAt(0);
-
+            // 获取word中的导出配置
+            Map<String, Map<String, String>> extract = wordTextUtil.getExtract();
+            // word导出需要的数据
+            Map<String, Object> wordMap = new HashMap<>();
             // 获取excel配置
             List<Object> excelConfigs = xmlEntityUtil.getExcelConfigs();
             // 获取所有表头
@@ -57,11 +70,13 @@ public class TestController {
             // 获取所有表头配置（包括列宽和合并单元格信息）
             Map<String, ExcelHeaderConfig> headerConfigs = xmlEntityUtil.extractExcelHeaderConfigs();
             // 巡检结果
+            /*Map<String, List<Object>> inspection = inspectionService.inspection(date);
+            JSONObject json = JSONUtil.parseObj(inspection);*/
             String result = "{\"cpu\":[{\"us\":80,\"sy\":1.2,\"id\":\"1\",\"wa\":0.0,\"password\":\"456456xx\",\"os\":\"linux\",\"port\":\"2222\",\"ip\":\"127.0.0.1\",\"name\":\"WSL\",\"account\":\"myh\",\"threshold\":{\"id\":{\"lower\":\"20\"},\"us\":{\"higher\":\"80\"}},\"checker\":\"神州数码\",\"time\":\"10:16\",\"date\":\"2025-11-21\"},{\"us\":0.0,\"sy\":0.0,\"id\":\"2\",\"wa\":0.0,\"password\":\"456456xx\",\"os\":\"linux\",\"port\":\"2222\",\"ip\":\"127.0.0.1\",\"name\":\"WSL1\",\"account\":\"myh\",\"threshold\":{\"id\":{\"lower\":\"20\"},\"us\":{\"higher\":\"80\"}},\"checker\":\"神州数码\",\"time\":\"10:16\",\"date\":\"2025-11-21\"}],\"service-zt\":[{\"host\":\"localhost\",\"db\":\"performance_schema\",\"user\":\"mysql.session\",\"select_priv\":\"N\",\"insert_priv\":\"N\",\"update_priv\":\"N\",\"delete_priv\":\"N\",\"create_priv\":\"N\",\"drop_priv\":\"N\",\"grant_priv\":\"N\",\"references_priv\":\"N\",\"index_priv\":\"N\",\"alter_priv\":\"N\",\"create_tmp_table_priv\":\"N\",\"lock_tables_priv\":\"N\",\"create_view_priv\":\"N\",\"show_view_priv\":\"N\",\"create_routine_priv\":\"N\",\"alter_routine_priv\":\"N\",\"execute_priv\":\"N\",\"event_priv\":\"N\",\"trigger_priv\":\"N\",\"failed\":7.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"db\":\"sys\",\"user\":\"mysql.sys\",\"select_priv\":\"N\",\"insert_priv\":\"N\",\"update_priv\":\"N\",\"delete_priv\":\"N\",\"create_priv\":\"N\",\"drop_priv\":\"N\",\"grant_priv\":\"N\",\"references_priv\":\"N\",\"index_priv\":\"N\",\"alter_priv\":\"N\",\"create_tmp_table_priv\":\"N\",\"lock_tables_priv\":\"N\",\"create_view_priv\":\"N\",\"show_view_priv\":\"N\",\"create_routine_priv\":\"N\",\"alter_routine_priv\":\"N\",\"execute_priv\":\"N\",\"event_priv\":\"N\",\"trigger_priv\":\"Y\",\"failed\":1.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"db\":\"performance_schema\",\"user\":\"mysql.session\",\"select_priv\":\"Y\",\"insert_priv\":\"N\",\"update_priv\":\"N\",\"delete_priv\":\"N\",\"create_priv\":\"N\",\"drop_priv\":\"N\",\"grant_priv\":\"N\",\"references_priv\":\"N\",\"index_priv\":\"N\",\"alter_priv\":\"N\",\"create_tmp_table_priv\":\"N\",\"lock_tables_priv\":\"N\",\"create_view_priv\":\"N\",\"show_view_priv\":\"N\",\"create_routine_priv\":\"N\",\"alter_routine_priv\":\"N\",\"execute_priv\":\"N\",\"event_priv\":\"N\",\"trigger_priv\":\"N\",\"failed\":1.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"db\":\"sys\",\"user\":\"mysql.sys\",\"select_priv\":\"N\",\"insert_priv\":\"N\",\"update_priv\":\"N\",\"delete_priv\":\"N\",\"create_priv\":\"N\",\"drop_priv\":\"N\",\"grant_priv\":\"N\",\"references_priv\":\"N\",\"index_priv\":\"N\",\"alter_priv\":\"N\",\"create_tmp_table_priv\":\"N\",\"lock_tables_priv\":\"N\",\"create_view_priv\":\"N\",\"show_view_priv\":\"N\",\"create_routine_priv\":\"N\",\"alter_routine_priv\":\"N\",\"execute_priv\":\"N\",\"event_priv\":\"N\",\"trigger_priv\":\"Y\",\"failed\":4.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"user\":\"myh\",\"select_priv\":\"N\",\"insert_priv\":\"N\",\"update_priv\":\"N\",\"delete_priv\":\"N\",\"create_priv\":\"N\",\"drop_priv\":\"N\",\"reload_priv\":\"N\",\"shutdown_priv\":\"N\",\"process_priv\":\"N\",\"file_priv\":\"N\",\"grant_priv\":\"N\",\"references_priv\":\"N\",\"index_priv\":\"N\",\"alter_priv\":\"N\",\"show_db_priv\":\"N\",\"super_priv\":\"N\",\"create_tmp_table_priv\":\"N\",\"lock_tables_priv\":\"N\",\"execute_priv\":\"N\",\"repl_slave_priv\":\"N\",\"repl_client_priv\":\"N\",\"create_view_priv\":\"N\",\"show_view_priv\":\"N\",\"create_routine_priv\":\"N\",\"alter_routine_priv\":\"N\",\"create_user_priv\":\"N\",\"event_priv\":\"N\",\"trigger_priv\":\"N\",\"create_tablespace_priv\":\"N\",\"ssl_type\":\"\",\"ssl_cipher\":\"\",\"x509_issuer\":\"\",\"x509_subject\":\"\",\"max_questions\":0,\"max_updates\":0,\"max_connections\":0,\"max_user_connections\":0,\"plugin\":\"caching_sha2_password\",\"authentication_string\":\"$A$005$&h\\u0001g\\u0001\\n\\u00188~\\u001A\\u0006nCD\\u0018d.KY\\u0010UrJkAMqWVdcjDWSiGqT4GN1glvdYRb3U9kNhX3nWe66\",\"password_expired\":\"N\",\"password_last_changed\":1763625811000,\"password_lifetime\":30,\"account_locked\":\"N\",\"create_role_priv\":\"N\",\"drop_role_priv\":\"N\",\"failed\":7.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"user\":\"mysql.infoschema\",\"select_priv\":\"N\",\"insert_priv\":\"N\",\"update_priv\":\"N\",\"delete_priv\":\"N\",\"create_priv\":\"N\",\"drop_priv\":\"N\",\"grant_priv\":\"N\",\"references_priv\":\"N\",\"index_priv\":\"N\",\"alter_priv\":\"N\",\"show_db_priv\":\"N\",\"super_priv\":\"N\",\"create_tmp_table_priv\":\"N\",\"lock_tables_priv\":\"N\",\"execute_priv\":\"N\",\"repl_slave_priv\":\"N\",\"repl_client_priv\":\"N\",\"create_view_priv\":\"N\",\"show_view_priv\":\"N\",\"create_routine_priv\":\"N\",\"alter_routine_priv\":\"N\",\"create_user_priv\":\"N\",\"event_priv\":\"N\",\"trigger_priv\":\"Y\",\"create_tablespace_priv\":\"N\",\"ssl_type\":\"\",\"ssl_cipher\":\"\",\"x509_issuer\":\"\",\"x509_subject\":\"\",\"max_questions\":0,\"max_updates\":0,\"max_connections\":0,\"max_user_connections\":0,\"plugin\":\"caching_sha2_password\",\"authentication_string\":\"$A$005$THISISACOMBINATIONOFINVALIDSALTANDPASSWORDTHATMUSTNEVERBRBEUSED\",\"password_expired\":\"N\",\"password_last_changed\":1751350939000,\"account_locked\":\"Y\",\"create_role_priv\":\"N\",\"drop_role_priv\":\"N\",\"failed\":4.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"user\":\"mysql.session\",\"select_priv\":\"N\",\"insert_priv\":\"N\",\"update_priv\":\"N\",\"delete_priv\":\"N\",\"create_priv\":\"N\",\"drop_priv\":\"N\",\"reload_priv\":\"N\",\"shutdown_priv\":\"Y\",\"process_priv\":\"N\",\"file_priv\":\"N\",\"grant_priv\":\"N\",\"references_priv\":\"N\",\"index_priv\":\"N\",\"alter_priv\":\"N\",\"show_db_priv\":\"N\",\"super_priv\":\"Y\",\"create_tmp_table_priv\":\"N\",\"lock_tables_priv\":\"N\",\"execute_priv\":\"N\",\"repl_slave_priv\":\"N\",\"repl_client_priv\":\"N\",\"create_view_priv\":\"N\",\"show_view_priv\":\"N\",\"create_routine_priv\":\"N\",\"alter_routine_priv\":\"N\",\"create_user_priv\":\"N\",\"event_priv\":\"N\",\"trigger_priv\":\"N\",\"create_tablespace_priv\":\"N\",\"ssl_type\":\"\",\"ssl_cipher\":\"\",\"x509_issuer\":\"\",\"x509_subject\":\"\",\"max_questions\":0,\"max_updates\":0,\"max_connections\":0,\"max_user_connections\":0,\"plugin\":\"caching_sha2_password\",\"authentication_string\":\"$A$005$THISISACOMBINATIONOFINVALIDSALTANDPASSWORDTHATMUSTNEVERBRBEUSED\",\"password_expired\":\"N\",\"password_last_changed\":1751350939000,\"account_locked\":\"Y\",\"create_role_priv\":\"N\",\"drop_role_priv\":\"N\",\"failed\":7.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"user\":\"mysql.sys\",\"select_priv\":\"N\",\"insert_priv\":\"N\",\"update_priv\":\"N\",\"delete_priv\":\"N\",\"create_priv\":\"N\",\"drop_priv\":\"N\",\"reload_priv\":\"N\",\"shutdown_priv\":\"N\",\"process_priv\":\"N\",\"file_priv\":\"N\",\"grant_priv\":\"N\",\"references_priv\":\"N\",\"index_priv\":\"N\",\"alter_priv\":\"N\",\"show_db_priv\":\"N\",\"super_priv\":\"N\",\"create_tmp_table_priv\":\"N\",\"lock_tables_priv\":\"N\",\"execute_priv\":\"N\",\"repl_slave_priv\":\"N\",\"repl_client_priv\":\"N\",\"create_view_priv\":\"N\",\"show_view_priv\":\"N\",\"create_routine_priv\":\"N\",\"alter_routine_priv\":\"N\",\"create_user_priv\":\"N\",\"event_priv\":\"N\",\"trigger_priv\":\"N\",\"create_tablespace_priv\":\"N\",\"ssl_type\":\"\",\"ssl_cipher\":\"\",\"x509_issuer\":\"\",\"x509_subject\":\"\",\"max_questions\":0,\"max_updates\":0,\"max_connections\":0,\"max_user_connections\":0,\"plugin\":\"caching_sha2_password\",\"authentication_string\":\"$A$005$THISISACOMBINATIONOFINVALIDSALTANDPASSWORDTHATMUSTNEVERBRBEUSED\",\"password_expired\":\"N\",\"password_last_changed\":1751350939000,\"account_locked\":\"Y\",\"create_role_priv\":\"N\",\"drop_role_priv\":\"N\",\"failed\":4.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"user\":\"root\",\"select_priv\":\"Y\",\"insert_priv\":\"Y\",\"update_priv\":\"Y\",\"delete_priv\":\"Y\",\"create_priv\":\"Y\",\"drop_priv\":\"Y\",\"reload_priv\":\"Y\",\"shutdown_priv\":\"Y\",\"process_priv\":\"Y\",\"file_priv\":\"Y\",\"grant_priv\":\"Y\",\"references_priv\":\"Y\",\"index_priv\":\"Y\",\"alter_priv\":\"Y\",\"show_db_priv\":\"Y\",\"super_priv\":\"Y\",\"create_tmp_table_priv\":\"Y\",\"lock_tables_priv\":\"Y\",\"execute_priv\":\"Y\",\"repl_slave_priv\":\"Y\",\"repl_client_priv\":\"Y\",\"create_view_priv\":\"Y\",\"show_view_priv\":\"Y\",\"create_routine_priv\":\"Y\",\"alter_routine_priv\":\"Y\",\"create_user_priv\":\"Y\",\"event_priv\":\"Y\",\"trigger_priv\":\"Y\",\"create_tablespace_priv\":\"Y\",\"ssl_type\":\"\",\"ssl_cipher\":\"\",\"x509_issuer\":\"\",\"x509_subject\":\"\",\"max_questions\":0,\"max_updates\":0,\"max_connections\":0,\"max_user_connections\":0,\"plugin\":\"caching_sha2_password\",\"authentication_string\":\"$A$005$d[;w_e\\u001BH~Ra\\u000B\\\"4\\\"M{a@ovlNZ3bNolF1kZPtrgTSfJN4EyJ6LO1EdNSC1rXa1Pk2\",\"password_expired\":\"N\",\"password_last_changed\":1751351054000,\"account_locked\":\"N\",\"create_role_priv\":\"Y\",\"drop_role_priv\":\"Y\",\"failed\":8.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}}],\"memory\":[{\"mem_total\":\"8011996\",\"mem_used\":\"517944\",\"mem_free\":\"7450832\",\"free_total\":\"2097152\",\"free_used\":\"0\",\"free_free\":\"2097152\",\"password\":\"456456xx\",\"os\":\"linux\",\"port\":\"2222\",\"ip\":\"127.0.0.1\",\"name\":\"WSL\",\"id\":\"1\",\"account\":\"myh\",\"threshold\":{\"mem_used\":{\"higher\":\"80\"},\"free_used\":{\"higher\":\"10\"}},\"checker\":\"神州数码\",\"time\":\"10:16\",\"date\":\"2025-11-21\"},{\"mem_total\":\"8011996\",\"mem_used\":\"521212\",\"mem_free\":\"7447564\",\"free_total\":\"2097152\",\"free_used\":\"0\",\"free_free\":\"2097152\",\"password\":\"456456xx\",\"os\":\"linux\",\"port\":\"2222\",\"ip\":\"127.0.0.1\",\"name\":\"WSL1\",\"id\":\"2\",\"account\":\"myh\",\"threshold\":{\"mem_used\":{\"higher\":\"85\"},\"free_used\":{\"higher\":\"10\"}},\"checker\":\"神州数码\",\"time\":\"10:16\",\"date\":\"2025-11-21\"},{\"password\":\"456456xx\",\"os\":\"linux\",\"port\":\"2223\",\"ip\":\"127.0.0.1\",\"name\":\"WSL2\",\"account\":\"myh\"}],\"storage\":[{\"filesystem_/\":\"/dev/sdd\",\"size_/\":\"1055762868\",\"used_/\":\"2430140\",\"avail_/\":\"999629256\",\"use_root\":\"1\",\"mounted_/\":\"/\",\"dir_/\":\"/\",\"filesystem_/home\":\"/dev/sdd\",\"size_/home\":\"1055762868\",\"used_/home\":\"2430140\",\"avail_/home\":\"999629256\",\"use_home\":\"1\",\"mounted_/home\":\"/\",\"dir_/home\":\"/home\",\"filesystem_/opt\":\"/dev/sdd\",\"size_/opt\":\"1055762868\",\"used_/opt\":\"2430140\",\"avail_/opt\":\"999629256\",\"use_/opt\":\"1\",\"mounted_/opt\":\"/\",\"dir_/opt\":\"/opt\",\"password\":\"456456xx\",\"os\":\"linux\",\"port\":\"2222\",\"ip\":\"127.0.0.1\",\"name\":\"WSL1\",\"id\":\"2\",\"account\":\"myh\",\"threshold\":{\"use_root\":{\"higher\":\"80\"},\"use_home\":{\"higher\":\"80\"}},\"checker\":\"神州数码\",\"time\":\"10:16\",\"date\":\"2025-11-21\"}],\"service-sb\":[{\"host\":\"localhost\",\"db\":\"performance_schema\",\"user\":\"mysql.session\",\"failed\":4.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"db\":\"sys\",\"user\":\"mysql.sys\",\"failed\":5.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"db\":\"performance_schema\",\"user\":\"mysql.session\",\"failed\":8.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}},{\"host\":\"localhost\",\"db\":\"sys\",\"user\":\"mysql.sys\",\"failed\":4.0,\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库2\",\"id\":\"4\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"failed\":{\"higher\":\"6\"}}}],\"expire-mysql\":[{\"user\":\"myh\",\"host\":\"localhost\",\"password_last_changed\":1763625811000,\"password_lifetime\":\"30\",\"password_expired\":\"N\",\"expire_time\":\"2025-12-20 16:03:31\",\"remaining_days\":\"29\",\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"remaining_days\":{\"lower\":\"7\"}}},{\"user\":\"mysql.infoschema\",\"host\":\"localhost\",\"password_last_changed\":1751350939000,\"password_lifetime\":\"\",\"password_expired\":\"N\",\"expire_time\":\"\",\"remaining_days\":\"\",\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"remaining_days\":{\"lower\":\"7\"}}},{\"user\":\"mysql.session\",\"host\":\"localhost\",\"password_last_changed\":1751350939000,\"password_lifetime\":\"\",\"password_expired\":\"N\",\"expire_time\":\"\",\"remaining_days\":\"\",\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"remaining_days\":{\"lower\":\"7\"}}},{\"user\":\"mysql.sys\",\"host\":\"localhost\",\"password_last_changed\":1751350939000,\"password_lifetime\":\"\",\"password_expired\":\"N\",\"expire_time\":\"\",\"remaining_days\":\"\",\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"remaining_days\":{\"lower\":\"7\"}}},{\"user\":\"root\",\"host\":\"localhost\",\"password_last_changed\":1751351054000,\"password_lifetime\":\"\",\"password_expired\":\"N\",\"expire_time\":\"\",\"remaining_days\":\"\",\"password\":\"456456xx\",\"port\":\"3306\",\"ip\":\"127.0.0.1\",\"name\":\"数据库1\",\"id\":\"3\",\"type\":\"mysql8\",\"username\":\"root\",\"threshold\":{\"remaining_days\":{\"lower\":\"7\"}}}]}";
             JSONObject json = JSONUtil.parseObj(result);
 
-            for (int i = 0; i < excelConfigs.size(); i++) {
-                Map<String, Object> excelConfig = (Map<String, Object>) excelConfigs.get(i);
+            for (Object config : excelConfigs) {
+                Map<String, Object> excelConfig = (Map<String, Object>) config;
                 String sheetName = MapUtil.getStr(excelConfig, "@name", "OP");
                 writer.setSheet(sheetName);
 
@@ -93,12 +108,19 @@ public class TestController {
                             if (!dataList.isEmpty() && dataList.get(0) instanceof Map) {
                                 thresholdObj = ((Map<String, Object>) dataList.get(0)).get("threshold");
                             }
+                            // 连接失败的数据列表
+                            List<Map<Object, Object>> failedList = Lists.newArrayList();
                             for (Object dataItem : dataList) {
                                 Map<String, Object> orderedItem = new LinkedHashMap<>();
                                 if (dataItem instanceof Map) {
+                                    Map<String, Object> item = (Map<String, Object>) dataItem;
+                                    // 将连接失败的数据添加到failedList
+                                    if (item.containsKey("failed")) {
+                                        buildKeyValMap(extract, forKey, item, failedList);
+                                    }
                                     // 严格按照headerMap的顺序和字段来生成表头和数据
                                     for (String field : headerMap.keySet()) {
-                                        orderedItem.put(field.toLowerCase(), ((Map<String, Object>) dataItem).get(field.toLowerCase()));
+                                        orderedItem.put(field.toLowerCase(), item.get(field.toLowerCase()));
                                     }
                                 } else {
                                     // 如果不是Map类型，创建一个只包含headerMap字段的空对象
@@ -112,6 +134,8 @@ public class TestController {
                             writer.passRows(currentRow);
                             writer.write(orderedDataList, false);
 
+                            // 阈值高亮的数据列表
+                            List<Map<Object, Object>> overList = Lists.newArrayList();
                             // 为每个数据行应用阈值高亮
                             for (int rowIndex = 0; rowIndex < orderedDataList.size(); rowIndex++) {
                                 Map<String, Object> rowData = orderedDataList.get(rowIndex);
@@ -119,13 +143,32 @@ public class TestController {
 
                                 // 检查每个字段是否符合其阈值
                                 int colIndex = 0;
+                                // 标记该行数据是否有超出阈值的字段
+                                boolean isDataRowExceeded = false;
                                 for (String fieldName : headerMap.keySet()) {
-                                    org.example.inspection.utils.ExcelUtil.checkThresholdAndHighlight(writer, rowData, thresholdObj, fieldName, colIndex, actualRow);
+                                    boolean isExceeded = org.example.inspection.utils.ExcelUtil.checkThresholdAndHighlight(writer, rowData, thresholdObj, fieldName, colIndex, actualRow);
+                                    if (isExceeded) {
+                                        isDataRowExceeded = true; // 如果有任何字段超出阈值，则标记该行数据为不合格
+                                    }
                                     colIndex++;
                                 }
-                            }
 
+                                // 如果该行数据有超出阈值的字段，则将其添加到不合格数据列表中
+                                if (isDataRowExceeded) {
+                                    Map<String, String> keyValMap = extract.get(forKey);
+                                    if (MapUtil.isNotEmpty(keyValMap)) {
+                                        Object key = rowData.get(keyValMap.get("key"));
+                                        Object val = null;
+                                        if (StrUtil.isNotBlank(keyValMap.get("val"))) {
+                                            val = rowData.get(keyValMap.get("val"));
+                                        }
+                                        overList.add(MapUtil.builder().put(key, val).build());
+                                    }
+                                }
+                            }
                             currentRow += orderedDataList.size();
+                            // 数据封装
+                            buildWordMap(orderedDataList, failedList, overList, wordMap, forKey);
                         } else if (tableData != null) {
                             List<Map<String, Object>> dataList = new ArrayList<>();
                             // 确保数据按照headerMap的字段顺序显示
@@ -197,12 +240,27 @@ public class TestController {
                                 if (!dataList.isEmpty() && dataList.get(0) instanceof Map) {
                                     thresholdObj = ((Map<String, Object>) dataList.get(0)).get("threshold");
                                 }
+                                // 连接失败的数据列表
+                                List<Map<Object, Object>> failedList = Lists.newArrayList();
                                 for (Object dataItem : dataList) {
                                     Map<String, Object> orderedItem = new LinkedHashMap<>();
                                     if (dataItem instanceof Map) {
+                                        Map<String, Object> item = (Map<String, Object>) dataItem;
+                                        // 将连接失败的数据添加到failedList
+                                        if (item.containsKey("failed")) {
+                                            Map<String, String> keyValMap = extract.get(forKey);
+                                            if (MapUtil.isNotEmpty(keyValMap)) {
+                                                Object key = item.get(keyValMap.get("key"));
+                                                Object val = null;
+                                                if (StrUtil.isNotBlank(keyValMap.get("val"))) {
+                                                    val = item.get(keyValMap.get("val"));
+                                                }
+                                                failedList.add(MapUtil.builder().put(key, val).build());
+                                            }
+                                        }
                                         // 严格按照headerMap的顺序和字段来生成表头和数据
                                         for (String field : headerMap.keySet()) {
-                                            orderedItem.put(field.toLowerCase(), ((Map<String, Object>) dataItem).get(field.toLowerCase()));
+                                            orderedItem.put(field.toLowerCase(), item.get(field.toLowerCase()));
                                         }
                                     } else {
                                         // 如果不是Map类型，创建一个只包含headerMap字段的空对象
@@ -215,18 +273,38 @@ public class TestController {
                                 // 使用passRows确保数据写入到正确的位置
                                 writer.passRows(tableHeaderRows);
                                 writer.write(orderedDataList, false);
+                                // 阈值高亮的数据列表
+                                List<Map<Object, Object>> overList = Lists.newArrayList();
                                 // 为每个数据行应用阈值高亮
                                 for (int rowIndex = 0; rowIndex < orderedDataList.size(); rowIndex++) {
                                     Map<String, Object> rowData = orderedDataList.get(rowIndex);
                                     int actualRow = currentRow + rowIndex; // 正确的行索引
                                     // 检查每个字段是否符合其阈值
                                     int colIndex = 0;
+                                    // 标记该行数据是否有超出阈值的字段
+                                    boolean isDataRowExceeded = false;
                                     for (String fieldName : headerMap.keySet()) {
-                                        org.example.inspection.utils.ExcelUtil.checkThresholdAndHighlight(writer, rowData, thresholdObj, fieldName, colIndex, actualRow);
+                                        boolean isExceeded = org.example.inspection.utils.ExcelUtil.checkThresholdAndHighlight(writer, rowData, thresholdObj, fieldName, colIndex, actualRow);
+                                        if (isExceeded) {
+                                            isDataRowExceeded = true; // 如果有任何字段超出阈值，则标记该行数据为不合格
+                                        }
                                         colIndex++;
+                                    }
+                                    // 如果该行数据有超出阈值的字段，则将其添加到不合格数据列表中
+                                    if (isDataRowExceeded) {
+                                        Map<String, String> keyValMap = extract.get(forKey);
+                                        if (MapUtil.isNotEmpty(keyValMap)) {
+                                            Object key = rowData.get(keyValMap.get("key"));
+                                            Object val = null;
+                                            if (StrUtil.isNotBlank(keyValMap.get("val"))) {
+                                                val = rowData.get(keyValMap.get("val"));
+                                            }
+                                            overList.add(MapUtil.builder().put(key, val).build());
+                                        }
                                     }
                                 }
                                 currentRow += orderedDataList.size(); // 数据行数
+                                buildWordMap(orderedDataList, failedList, overList, wordMap, forKey);
                             } else if (tableData != null) {
                                 List<Map<String, Object>> dataList = new ArrayList<>();
                                 // 确保数据按照headerMap的字段顺序显示
@@ -268,17 +346,61 @@ public class TestController {
                     }
                 }
             }
-
             // 直接将文件写入到指定路径，不再通过浏览器响应
             writer.close();
             System.out.println("Excel文件已成功保存至: " + filePath);
             res = "Excel文件已成功保存至: " + filePath;
+            // 调用word工具类生成word文件
+            wordTextUtil.parse(wordMap, fileName);
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("生成Excel时出错: " + e.getMessage());
             res = "生成Excel时出错: " + e.getMessage();
         }
         return res;
+    }
+
+    /**
+     * 构建Word文档所需的数据映射
+     * 
+     * @param orderedDataList 数据列表
+     * @param failedList      失败数据列表
+     * @param overList        超出阈值数据列表
+     * @param wordMap         Word数据映射
+     * @param forKey          当前处理的数据表标识符
+     */
+    private static void buildWordMap(List<Map<String, Object>> orderedDataList, List<Map<Object, Object>> failedList, List<Map<Object, Object>> overList, Map<String, Object> wordMap, String forKey) {
+        Map<String, Object> wordDataMap = new HashMap<>();
+        int dataSize = orderedDataList.size();
+        int failedSize = failedList.size();
+        int overSize = overList.size();
+        wordDataMap.put("total", dataSize);
+        wordDataMap.put("normal", dataSize - failedSize - overSize);
+        wordDataMap.put("failed_size", failedSize);
+        wordDataMap.put("failed", failedList);
+        wordDataMap.put("over_size", overSize);
+        wordDataMap.put("over", overList);
+        wordMap.put(forKey, wordDataMap);
+    }
+
+    /**
+     * 构建键值对映射并添加到列表中
+     * 
+     * @param extract   提取配置映射，包含键值对的提取规则
+     * @param forKey    当前处理的数据表标识符
+     * @param item      当前处理的数据项
+     * @param failedList 用于存储提取结果的列表
+     */
+    private static void buildKeyValMap(Map<String, Map<String, String>> extract, String forKey, Map<String, Object> item, List<Map<Object, Object>> failedList) {
+        Map<String, String> keyValMap = extract.get(forKey);
+        if (MapUtil.isNotEmpty(keyValMap)) {
+            Object key = item.get(keyValMap.get("key"));
+            Object val = null;
+            if (StrUtil.isNotBlank(keyValMap.get("val"))) {
+                val = item.get(keyValMap.get("val"));
+            }
+            failedList.add(MapUtil.builder().put(key, val).build());
+        }
     }
 
     /**
@@ -291,7 +413,7 @@ public class TestController {
      * @param currentRow   当前行位置
      * @return 更新后的当前行位置
      */
-    private static int processTableHeaders(ExcelWriter writer, String title, ExcelHeaderConfig headerConfig, Map<String, String> headerMap, int currentRow) {
+    private int processTableHeaders(ExcelWriter writer, String title, ExcelHeaderConfig headerConfig, Map<String, String> headerMap, int currentRow) {
         // 添加标题行
         if (title != null && !title.trim().isEmpty()) {
             int headerWidth = headerMap.size() - 1; // 0-based index
@@ -314,7 +436,7 @@ public class TestController {
      * @param headerMap    表头映射
      * @return 表头总行数
      */
-    private static int getTableHeaderRows(String title, ExcelHeaderConfig headerConfig, Map<String, String> headerMap) {
+    private int getTableHeaderRows(String title, ExcelHeaderConfig headerConfig, Map<String, String> headerMap) {
         int tableHeaderRows = 0;
         if (title != null && !title.trim().isEmpty()) {
             tableHeaderRows++; // 标题行
@@ -327,9 +449,4 @@ public class TestController {
         return tableHeaderRows;
     }
 
-    @GetMapping("/test-text")
-    public String testText() {
-        System.out.println("测试文本端点");
-        return "你好，这是一个测试！";
-    }
 }

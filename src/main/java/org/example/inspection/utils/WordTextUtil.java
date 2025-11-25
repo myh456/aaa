@@ -61,8 +61,8 @@ public class WordTextUtil {
         });
     }
 
-    public Map<String, String> getExtract(String forName) {
-        return extract.get(forName);
+    public Map<String, Map<String, String>> getExtract() {
+        return extract;
     }
 
     /**

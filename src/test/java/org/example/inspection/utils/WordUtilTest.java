@@ -51,9 +51,4 @@ public class WordUtilTest {
         wordTextUtil.parse(data, "巡检_defrgtb");
     }
 
-    @Test
-    public void test2() {
-        System.out.println(wordTextUtil.getExtract("cpu"));
-        System.out.println(wordTextUtil.getExtract("storage"));
-    }
 }

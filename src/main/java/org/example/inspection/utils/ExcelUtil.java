@@ -67,24 +67,24 @@ public class ExcelUtil {
      * @param fieldName   字段名称
      * @param x           列索引
      * @param y           行索引
-     * @return 更新了单元格样式的ExcelWriter（如果满足阈值条件）
+     * @return 如果该字段超出阈值则返回true，否则返回false
      */
-    public static ExcelWriter checkThresholdAndHighlight(ExcelWriter excelWriter, Map<String, Object> rowData, Object thresholdObj, String fieldName, int x, int y) {
+    public static boolean checkThresholdAndHighlight(ExcelWriter excelWriter, Map<String, Object> rowData, Object thresholdObj, String fieldName, int x, int y) {
         // 从行数据中获取阈值数据
         if (!(thresholdObj instanceof Map)) {
-            return excelWriter;
+            return false;
         }
 
         Map<String, Object> thresholdMap = (Map<String, Object>) thresholdObj;
 
         // 检查此字段是否有阈值配置
         if (!thresholdMap.containsKey(fieldName)) {
-            return excelWriter;
+            return false;
         }
 
         Object fieldThreshold = thresholdMap.get(fieldName);
         if (!(fieldThreshold instanceof Map)) {
-            return excelWriter;
+            return false;
         }
 
         Map<String, Object> fieldThresholdMap = (Map<String, Object>) fieldThreshold;
@@ -92,11 +92,12 @@ public class ExcelUtil {
         // 获取实际值进行比较
         Object fieldValueObj = rowData.get(fieldName);
         if (fieldValueObj == null) {
-            return excelWriter;
+            return false;
         }
 
         try {
             double fieldValue = Double.parseDouble(String.valueOf(fieldValueObj));
+            boolean isExceeded = false;
 
             // 检查较高阈值
             if (fieldThresholdMap.containsKey("higher")) {
@@ -104,6 +105,7 @@ public class ExcelUtil {
                 if (fieldValue >= higherThreshold) {
                     // 如果值大于或等于较高阈值，则用红色突出显示
                     setCellBackgroundColor(excelWriter, x, y, IndexedColors.RED.getIndex());
+                    isExceeded = true;
                 }
             }
 
@@ -113,14 +115,15 @@ public class ExcelUtil {
                 if (fieldValue <= lowerThreshold) {
                     // 如果值小于或等于较低阈值，则用红色突出显示
                     setCellBackgroundColor(excelWriter, x, y, IndexedColors.RED.getIndex());
+                    isExceeded = true;
                 }
             }
+            
+            return isExceeded;
         } catch (NumberFormatException e) {
             // 如果值无法解析为double，则不执行任何操作
-            return excelWriter;
+            return false;
         }
-
-        return excelWriter;
     }
 
     /**
@@ -359,7 +362,7 @@ public class ExcelUtil {
         CellStyle titleStyle = excelWriter.createCellStyle();
         Font font = excelWriter.createFont();
         font.setBold(true);
-        font.setFontHeightInPoints((short) 14);
+        font.setFontHeightInPoints((short) 16);
         titleStyle.setFont(font);
         titleStyle.setAlignment(HorizontalAlignment.CENTER);
         titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);

@@ -10,5 +10,5 @@ server:
 
 path:
   config: classpath:config/
-  excel: D:/export/excel/
-  word: D:/export/word/
+  excel: D:/巡检结果/excel/
+  word: D:/巡检结果/word/
