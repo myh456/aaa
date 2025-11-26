@@ -28,4 +28,7 @@
         <instance id="1"/>
         <expire id="1"/>
     </character>
+    <character id="7" name="远程角色">
+        <connectivity id="1"/>
+    </character>
 </root>

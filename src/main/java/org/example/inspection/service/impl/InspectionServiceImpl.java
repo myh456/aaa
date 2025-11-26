@@ -2,6 +2,7 @@ package org.example.inspection.service.impl;
 
 import org.example.inspection.service.DatabaseInspectionService;
 import org.example.inspection.service.InspectionService;
+import org.example.inspection.service.RemoteInspectionService;
 import org.example.inspection.service.ServerInspectionService;
 import org.springframework.stereotype.Service;
 
@@ -22,9 +23,11 @@ public class InspectionServiceImpl implements InspectionService {
     private DatabaseInspectionService databaseInspectionService;
     @Resource
     private ServerInspectionService serverInspectionService;
+    @Resource
+    private RemoteInspectionService remoteInspectionService;
 
     private final String checker = "神州数码";
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH.mm.ss");
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     @Override
@@ -34,6 +37,7 @@ public class InspectionServiceImpl implements InspectionService {
         Map<String, List<Object>> results = new HashMap<>();
         results.putAll(databaseInspectionService.inspection(checker, time, date));
         results.putAll(serverInspectionService.inspection(checker, time, date));
+        results.putAll(remoteInspectionService.inspection(checker, time, date));
         return results;
     }
 }

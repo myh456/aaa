@@ -28,7 +28,7 @@ public class DatabaseInspectionServiceImpl implements DatabaseInspectionService 
     }
 
     @SuppressWarnings("unchecked")
-    public void inspectionSingle(Map<String, Object> database, String checker, String time, String date) {
+    private void inspectionSingle(Map<String, Object> database, String checker, String time, String date) {
         // 获取基础属性
         Map<String, Object> attrs = new HashMap<>();
         for(String key: database.keySet()) {

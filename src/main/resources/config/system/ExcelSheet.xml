@@ -5,20 +5,20 @@
                 服务器CPU巡检结果
             </title>
             <row>
+                <cell from="ip" name="服务器IP" width="15"/>
+                <cell from="port" name="端口" width="10"/>
                 <cell from="name" name="服务器名称" width="20"/>
-                <cell from="us" name="CPU使用率us" width="15"/>
-                <cell from="id" name="CPU空闲率id" width="15"/>
-                <cell name="合并">
-                    <cell from="sy" name="sy阿斯达" width="15"/>
-                    <cell from="wa" name="wa杀神风" width="20"/>
-                </cell>
+                <cell from="us" name="CPU用户占用率" width="20"/>
+                <cell from="sy" name="CPU系统占用率" width="20"/>
+                <cell from="id" name="CPU空闲率" width="15"/>
+                <cell from="wa" name="CPU等待率" width="15"/>
             </row>
         </table>
     </sheet>
     <sheet name="服务器内存巡检">
         <table for="memory">
             <title>
-                服务器物理内存巡检结果
+                服务器内存巡检结果
             </title>
             <row>
                 <cell from="name" name="服务器名称" width="20"/>

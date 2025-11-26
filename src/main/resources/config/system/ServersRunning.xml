@@ -200,7 +200,7 @@
     <expire type="vertica">
         <sql>
             SELECT
-                U.USER_NAME,
+                U.USER_NAME AS USERNAME,
                 CASE
                     WHEN U.IS_LOCKED AND PF.PASSWORD_LIFE_TIME ::! INT IS NOT NULL AND NOW() > TIMESTAMPADD('D', PF.PASSWORD_LIFE_TIME ::! INT, P.PASSWORD_CREATE_TIME)
                         THEN 'EXPIRED &amp; LOCKED'
@@ -304,14 +304,14 @@
         <sql>select Host, Db, User from mysql.db</sql>
     </service-rk>
 
-<!--    <connectivity currentOS="linux">-->
-<!--        <shell>-->
-<!--            echo "{{address}}" | xargs -I {} curl -s -o /dev/null -w "{} %{http_code}" {} | awk '{print "{\"domain\": \"" $1 "\", \"status_code\": " $2 "}"}'-->
-<!--        </shell>-->
-<!--    </connectivity>-->
-<!--    <connectivity currentOS="win">-->
-<!--        <shell>-->
-<!--            '{{address}}' | ForEach-Object { $domain = $_; try { $code = (Invoke-WebRequest -Uri "http://$domain" -UseBasicParsing -MaximumRedirection 0 -ErrorAction Stop).StatusCode } catch { $code = $_.Exception.Response.StatusCode } Write-Output "{""domain"": ""$domain"", ""status_code"": $code}" }-->
-<!--        </shell>-->
-<!--    </connectivity>-->
+    <connectivity currentOS="linux">
+        <shell>
+            echo "{{address}}" | xargs -I {} curl -s -o /dev/null -w "{} %{http_code}" {} | awk '{print "{\"address\": \"" $1 "\", \"status\": " $2 "}"}'
+        </shell>
+    </connectivity>
+    <connectivity currentOS="win">
+        <shell>
+            powershell -Command "'{{address}}' | ForEach-Object { $domain = $_; try { $code = (Invoke-WebRequest -Uri \"http://$domain\" -UseBasicParsing -MaximumRedirection 0 -ErrorAction Stop).StatusCode } catch { $code = $_.Exception.Response.StatusCode } Write-Output \"{`\"address`\": `\"$domain`\", `\"status`\": $code}\" }"
+        </shell>
+    </connectivity>
 </root>

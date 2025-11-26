@@ -30,6 +30,8 @@ public class InspectionEntityUtil {
     @Getter
     private Map<String, Object> sqls;
     @Getter
+    private Map<String, Object> shells;
+    @Getter
     private Map<String, Map<Integer, Object>> rules;
     @Getter
     private Map<Integer, Object> charas;
@@ -40,9 +42,13 @@ public class InspectionEntityUtil {
     @Getter
     private Map<String, Object> defaultDatabaseCheck;
     @Getter
+    private Map<String, Object> defaultRemoteCheck;
+    @Getter
     private List<Map<String, Object>> servers;
     @Getter
     private List<Map<String, Object>> databases;
+    @Getter
+    private List<Map<String, Object>> remotes;
     @Getter
     private List<Object> excelConfigs;
 
@@ -57,6 +63,7 @@ public class InspectionEntityUtil {
         initConfig();
         initServer();
         initDatabase();
+        initRemote();
         initExcelConfig();
     }
 
@@ -65,6 +72,7 @@ public class InspectionEntityUtil {
         // 初始化命令配置
         cmds = new HashMap<>();
         sqls = new HashMap<>();
+        shells = new HashMap<>();
         Map<String, Object> runs = xmlParser.parseXml(configPath + "system/ServersRunning.xml");
         runs.forEach((k, v) -> {
             if (v instanceof Map) {
@@ -72,12 +80,16 @@ public class InspectionEntityUtil {
                     cmds.put(k, v);
                 } else if (((Map<String, Object>) v).containsKey("sql")) {
                     sqls.put(k, v);
+                } else if (((Map<String, Object>) v).containsKey("shell")) {
+                    shells.put(k, v);
                 }
             } else {
                 if (((Map<String, Object>) ((List<Object>) v).get(0)).containsKey("cmd")) {
                     cmds.put(k, v);
                 } else if (((Map<String, Object>) ((List<Object>) v).get(0)).containsKey("sql")) {
                     sqls.put(k, v);
+                } else if (((Map<String, Object>) ((List<Object>) v).get(0)).containsKey("shell")) {
+                    shells.put(k, v);
                 }
             }
         });
@@ -122,6 +134,7 @@ public class InspectionEntityUtil {
         Map<String, Object> defaultMap = xmlParser.parseXml(configPath + "DefaultConfig.xml");
         defaultServerCheck = new HashMap<>();
         defaultDatabaseCheck = new HashMap<>();
+        defaultRemoteCheck = new HashMap<>();
         defaultConfig = defaultMap;
         if (defaultMap.containsKey("server-check") && !"".equals(defaultMap.get("server-check"))) {
             Map<String, Object> checks = (Map<String, Object>) defaultMap.get("server-check");
@@ -144,6 +157,18 @@ public class InspectionEntityUtil {
                     defaultDatabaseCheck.put(k, item);
                 } else {
                     defaultDatabaseCheck.put(k, checks.get(k));
+                }
+            }
+        }
+        if (defaultMap.containsKey("remote-check") && !"".equals(defaultMap.get("remote-check"))) {
+            Map<String, Object> checks = (Map<String, Object>) defaultMap.get("remote-check");
+            defaultConfig.remove("remote-check");
+            for (String k : checks.keySet()) {
+                if (((Map<String, Object>) checks.get(k)).containsKey("@id")) {
+                    Map<String, Object> item = (Map<String, Object>) rules.get(k).get(Integer.parseInt(((Map<String, Object>) checks.get(k)).get("@id").toString()));
+                    defaultRemoteCheck.put(k, item);
+                } else {
+                    defaultRemoteCheck.put(k, checks.get(k));
                 }
             }
         }
@@ -284,7 +309,7 @@ public class InspectionEntityUtil {
             String temp = cmdTemplate;
             boolean modified = false;
             for (String var : contextAttrs.keySet()) {
-                String target = "{{" + var + "}}";
+                String target = "{{" + var.substring(1) + "}}";
                 if (temp.contains(target)) {
                     temp = temp.replace(target, contextAttrs.get(var).toString());
                     modified = true;
@@ -324,6 +349,11 @@ public class InspectionEntityUtil {
     public void initDatabase() throws DocumentException {
         this.databases = new ArrayList<>();
         loadConfiguration(configPath + "DatabaseConfig.xml", "database", this.databases, this.sqls, this.defaultDatabaseCheck, "sql");
+    }
+
+    public void initRemote() throws DocumentException {
+        this.remotes = new ArrayList<>();
+        loadConfiguration(configPath + "RemoteConfig.xml", "remote", this.remotes, this.shells, this.defaultRemoteCheck, "shell");
     }
 
 
