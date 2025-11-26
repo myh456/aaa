@@ -1,5 +1,6 @@
 package org.example.inspection.utils;
 
+import lombok.Getter;
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,8 @@ public class WordTextUtil {
     private String configPath;
     @Autowired
     private WordConverter wordConverter;
+    @Getter
+    private Map<String, String> summary;
 
     private Document document;
     private Map<String, Map<String, String>> extract;
@@ -69,12 +72,22 @@ public class WordTextUtil {
      * 用于将巡检结果转word
      * @param data 巡检结果
      */
-    public void parse(Map<String, Object> data, String fileName) {
+    public Map<String, String> parse(Map<String, Object> data, String fileName) {
         Element root = document.getRootElement();
-
         StringBuilder sb = new StringBuilder();
         processNodes(root.content(), data, sb);
-        wordConverter.convertFromMd(sb.toString().trim(), fileName);
+        String md = sb.toString().trim();
+        parseMd(md);
+        wordConverter.convertFromMd(md, fileName);
+        return summary;
+    }
+
+    private void parseMd(String md) {
+        summary = new HashMap<>();
+        String[] lines = md.split(System.lineSeparator());
+        for(int i = 1; i < lines.length; i += 2) {
+            summary.put(lines[i].substring(3), lines[i + 1].replaceAll("\\*\\*", ""));
+        }
     }
 
     /**
@@ -97,18 +110,18 @@ public class WordTextUtil {
                     case "extract":
                         break;
                     case "title":
-                        sb.append("# ").append(element.getTextTrim()).append("\n");
+                        sb.append("# ").append(element.getTextTrim()).append(System.lineSeparator());
                         break;
                     case "section":
                         handleSection(element, currentData, sb);
                         break;
                     case "subtitle":
-                        sb.append("## ").append(element.getTextTrim()).append("\n");
+                        sb.append("## ").append(element.getTextTrim()).append(System.lineSeparator());
                         break;
                     case "text":
                         // text 标签本身不输出内容，只作为容器，继续递归其子节点
                         processNodes(element.content(), currentData, sb);
-                        sb.append("\n"); // text块结束后通常换行
+                        sb.append(System.lineSeparator()); // text块结束后通常换行
                         break;
                     case "if":
                         handleIf(element, currentData, sb);
@@ -248,7 +261,6 @@ public class WordTextUtil {
         }
 
         @Override public Object put(String key, Object value) { return current.put(key, value); }
-        // 其他 Map 方法省略或按需实现...
         @Override public int size() { return 0; }
         @Override public boolean isEmpty() { return false; }
         @Override public boolean containsKey(Object key) { return current.containsKey(key) || parent.containsKey(key); }

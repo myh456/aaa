@@ -34,7 +34,9 @@
 
     <docker>
         <cmd>
-            docker ps --format '{{.Names}};{{.ID}};{{.Image}};{{.CreatedAt}};{{.Status}};{{.Ports}}' | awk -F ";" 'BEGIN{printf "{"} {printf "\"ContainerId_%s\":\"%s\",\"Image_%s\":\"%s\",\"Created_%s\":\"%s\",\"Status_%s\":\"%s\",\"Ports_%s\":\"%s\",", $1,$2,$1,$3,$1,$4,$1,$5,$1,$6} END{print "\b}"}'
+        <![CDATA[
+            docker ps --format '{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}|{{.Ports}}' | awk 'BEGIN {printf "["; FS = "|"; OFS = ""; fields[1] = "id"; fields[2] = "image"; fields[3] = "name"; fields[4] = "status"; fields[5] = "ports"} {if (NR > 1) {printf ","}; printf "{"; for (i = 1; i <= NF; i++) {printf "\"%s\": \"%s\"", fields[i], $i; if (i < NF) {printf ","} else {printf ""}}; printf "}"} END {printf "]"}'
+        ]]>
         </cmd>
     </docker>
 

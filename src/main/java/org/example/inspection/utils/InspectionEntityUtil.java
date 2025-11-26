@@ -1,5 +1,7 @@
 package org.example.inspection.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import lombok.Getter;
 import org.dom4j.DocumentException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,7 +151,7 @@ public class InspectionEntityUtil {
                 if (k.startsWith("@")) {
                     server.put(k, check.get(k));
                 }
-                if (!k.equals("character")) {
+                if (!"character".equals(k)) {
                     continue;
                 }
                 List<Object> charaList;
@@ -160,7 +162,8 @@ public class InspectionEntityUtil {
                 }
                 for (Object ch : charaList) {
                     int id = Integer.parseInt(((Map<String, Object>) ch).get("@id").toString());
-                    server.putAll((Map<String, Object>) charas.get(id));
+                    Map<String, Object> chara = JSONObject.parseObject(JSON.toJSONString(charas.get(id)));
+                    server.putAll(chara);
                     isDefault = false;
                 }
             }
@@ -295,7 +298,7 @@ public class InspectionEntityUtil {
                 if (k.startsWith("@")) {
                     database.put(k, check.get(k));
                 }
-                if (!k.equals("character")) {
+                if (!"character".equals(k)) {
                     continue;
                 }
                 List<Object> charaList;
@@ -306,7 +309,8 @@ public class InspectionEntityUtil {
                 }
                 for (Object ch : charaList) {
                     int id = Integer.parseInt(((Map<String, Object>) ch).get("@id").toString());
-                    database.putAll((Map<String, Object>) charas.get(id));
+                    Map<String, Object> chara = JSONObject.parseObject(JSON.toJSONString(charas.get(id)));
+                    database.putAll(chara);
                     isDefault = false;
                 }
             }
@@ -326,61 +330,52 @@ public class InspectionEntityUtil {
                 }
             });
             // 将sql插入数据库配置
-            Map<String, Object> databaseTemp = new HashMap<>(database);
-            databaseTemp.forEach((k, v) -> {
+            database.forEach((k, v) -> {
                 if (k.startsWith("@")) {
                     return;
                 }
-                List<Object> sqlList;
-                if (v instanceof Map) {
-                    sqlList = Collections.singletonList(v);
-                } else {
-                    sqlList = new ArrayList<>((List<Object>) v);
-                }
-                for (Object sql : sqlList) {
-                    if (sqls.containsKey(k)) {
-                        // 保存数据库配置的变量
-                        Map<String, List<String>> databaseVars = new HashMap<>();
-                        List<Map<String, String>> databaseMultiVars = new ArrayList<>();
-                        ((Map<String, Object>) v).forEach((k1, v1) -> {
-                            if (k1.endsWith("-attr")) {
-                                String attr = k1.substring(0, k1.length() - 5);
-                                if (v1 instanceof List) {
-                                    databaseVars.put(attr, (List<String>) v1);
-                                } else {
-                                    databaseVars.put(attr, Collections.singletonList(v1.toString()));
-                                }
-                            } else if ("attrs".equals(k1)) {
-                                if (v1 instanceof List) {
-                                    databaseMultiVars.addAll((List<Map<String, String>>) v1);
-                                } else {
-                                    databaseMultiVars.add((Map<String, String>) v1);
-                                }
+                if(sqls.containsKey(k)) {
+                    // 保存数据库配置的变量
+                    Map<String, List<String>> databaseVars = new HashMap<>();
+                    List<Map<String, String>> databaseMultiVars = new ArrayList<>();
+                    ((Map<String, Object>) v).forEach((k1, v1) -> {
+                        if (k1.endsWith("-attr")) {
+                            String attr = k1.substring(0, k1.length() - 5);
+                            if (v1 instanceof List) {
+                                databaseVars.put(attr, (List<String>) v1);
+                            } else {
+                                databaseVars.put(attr, Collections.singletonList(v1.toString()));
                             }
-                        });
-                        // 获取并插入sql
-                        sql = sqls.get(k);
-                        if (sql instanceof Map) {
-                            ((Map<String, Object>) v).putAll((Map<String, Object>) sql);
-                        } else {
-                            // 根据attrs进行过滤，取出attrs和sql中相同的键，值相同的命令
-                            Map<String, Object> cc = ((List<Map<String, Object>>) sql).stream()
-                                    .filter(c -> attrs.entrySet().stream()
-                                            .allMatch(attr ->
-                                                    !c.containsKey(attr.getKey()) ||
-                                                            Objects.equals(c.get(attr.getKey()), attr.getValue())
-                                            ))
-                                    .findFirst()
-                                    .orElse(null);
-                            if (cc == null) {
-                                return;
+                        } else if ("attrs".equals(k1)) {
+                            if (v1 instanceof List) {
+                                databaseMultiVars.addAll((List<Map<String, String>>) v1);
+                            } else {
+                                databaseMultiVars.add((Map<String, String>) v1);
                             }
-                            ((Map<String, Object>) v).putAll(cc);
-                            // 将数据库属性继承到巡检项
-                            for(String ka: attrs.keySet()) {
-                                if(!((Map<String, Object>) v).containsKey(ka)) {
-                                    ((Map<String, Object>) v).put(ka, attrs.get(ka));
-                                }
+                        }
+                    });
+                    // 获取并插入命令
+                    Object sql = sqls.get(k);
+                    if (sql instanceof Map) {
+                        ((Map<String, Object>) v).putAll((Map<String, Object>) sql);
+                    } else {
+                        // 根据attrs进行过滤，取出attrs和cmd中相同的键，值相同的命令
+                        Map<String, Object> ss = ((List<Map<String, Object>>) sql).stream()
+                                .filter(c -> attrs.entrySet().stream()
+                                        .allMatch(attr ->
+                                                !c.containsKey(attr.getKey()) ||
+                                                        Objects.equals(c.get(attr.getKey()), attr.getValue())
+                                        ))
+                                .findFirst()
+                                .orElse(null);
+                        if (ss == null) {
+                            return;
+                        }
+                        ((Map<String, Object>) v).putAll(ss);
+                        // 将数据库属性继承到巡检项
+                        for(String ka: attrs.keySet()) {
+                            if(!((Map<String, Object>) v).containsKey(ka)) {
+                                ((Map<String, Object>) v).put(ka, attrs.get(ka));
                             }
                         }
                         // 根据变量生成sql数组

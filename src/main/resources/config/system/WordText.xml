@@ -46,7 +46,7 @@
         <extract key="ip" val="dir"/>
         <subtitle>目录巡检结果</subtitle>
         <text>
-            本次共检查{{total}}个目录，**{{over_size}}**个超过阈值
+            本次共检查{{total}}个目录，{{over_size}}个超过阈值
             <if notzero="over_size">
                 ，分别为
                 <foreach from="over">
@@ -81,18 +81,14 @@
         <extract key="ip"/>
         <subtitle>实例巡检结果</subtitle>
         <text>
-            本次共检查{{total}}项实例，{{normal}}项正常，{{failed_size}}台连接不上未能巡检
-            <if notzero="failed_size">
-                ，分别为
-                <foreach from="failed" begin="" end="，" separator="、">
-                    {{key}}
-                </foreach>
-            </if>
-            {{over_size}}台超过阈值
-            <if notzero="over_size">
-                ，分别为
-                <foreach from="over" begin="" end="，" separator="、"></foreach>
-            </if>
+            本次共检查{{total}}项实例，{{normal}}项正常
+        </text>
+    </section>
+    <section for="expire">
+        <extract key="ip" val="username"/>
+        <subtitle>用户密码过期巡检结果</subtitle>
+        <text>
+            本次共检查{{total}}位用户
         </text>
     </section>
 </word>
