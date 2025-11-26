@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.ExcelWriter;
 import com.google.common.collect.Lists;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.example.inspection.service.InspectionService;
 import org.example.inspection.utils.ExcelHeaderConfig;
 import org.example.inspection.utils.InspectionEntityUtil;
@@ -59,6 +60,9 @@ public class TestController {
             ExcelWriter writer = ExcelUtil.getWriter(filePath);
             // 删除默认的sheet1工作表
             writer.getWorkbook().removeSheetAt(0);
+            writer.setSheet("汇总结果");
+            // 添加标题行
+            org.example.inspection.utils.ExcelUtil.addTitleRow(writer, "巡检结果汇总", 0, 0, 1);
             // 获取word中的导出配置
             Map<String, Map<String, String>> extract = wordTextUtil.getExtract();
             // word导出需要的数据
@@ -346,12 +350,30 @@ public class TestController {
                     }
                 }
             }
+            // 调用word工具类生成word文件
+            Map<String, String> parseResult = wordTextUtil.parse(wordMap, fileName);
+            if (MapUtil.isNotEmpty(parseResult)) {
+                writer.setSheet("汇总结果");
+                // 创建汇总数据
+                List<Map<String, Object>> summaryData = new ArrayList<>();
+                for (Map.Entry<String, String> entry : parseResult.entrySet()) {
+                    Map<String, Object> rowData = new LinkedHashMap<>();
+                    rowData.put("key", entry.getKey());
+                    rowData.put("value", entry.getValue());
+                    summaryData.add(rowData);
+                }
+                writer.passRows(1);
+                writer.write(summaryData, false);
+                // 设置列宽自适应内容
+                Sheet sheet = writer.getWorkbook().getSheetAt(0);
+                sheet.setColumnWidth(0, 30 * 256);  // 第一列宽度
+                sheet.setColumnWidth(1, 100 * 256); // 第二列宽度
+            }
             // 直接将文件写入到指定路径，不再通过浏览器响应
             writer.close();
             System.out.println("Excel文件已成功保存至: " + filePath);
             res = "Excel文件已成功保存至: " + filePath;
-            // 调用word工具类生成word文件
-            wordTextUtil.parse(wordMap, fileName);
+
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("生成Excel时出错: " + e.getMessage());

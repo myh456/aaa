@@ -28,7 +28,7 @@
         <instance id="1"/>
         <expire id="1"/>
     </character>
-    <character id="7" name="远端角色">
+<!--    <character id="7" name="远端角色">
         <connectivity id="1"/>
-    </character>
+    </character>-->
 </root>

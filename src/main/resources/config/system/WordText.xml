@@ -1,7 +1,7 @@
 <word>
     <title>巡检结果</title>
     <section for="cpu">
-        <extract key="ip"/>
+        <extract key="name"/>
         <subtitle>CPU巡检结果</subtitle>
         <text>
             本次共检查{{total}}台服务器，{{normal}}台正常，{{failed_size}}台连接不上未能巡检，
