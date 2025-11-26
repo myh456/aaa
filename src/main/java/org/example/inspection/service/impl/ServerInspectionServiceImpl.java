@@ -146,9 +146,9 @@ public class ServerInspectionServiceImpl implements ServerInspectionService {
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, List<Object>> inspection(String checker, String time, String date) {
-        List<Object> servers = inspectionEntityUtil.getServers();
-        for (Object server : servers) {
-            inspectionSingle((Map<String, Object>) server, checker, time, date);
+        List<Map<String, Object>> servers = inspectionEntityUtil.getServers();
+        for (Map<String, Object> server : servers) {
+            inspectionSingle(server, checker, time, date);
         }
         return results;
     }

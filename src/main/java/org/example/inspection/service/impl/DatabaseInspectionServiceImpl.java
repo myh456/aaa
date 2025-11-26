@@ -121,9 +121,9 @@ public class DatabaseInspectionServiceImpl implements DatabaseInspectionService 
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, List<Object>> inspection(String checker, String time, String date) {
-        List<Object> databases = inspectionEntityUtil.getDatabases();
-        for (Object database : databases) {
-            inspectionSingle((Map<String, Object>) database, checker, time, date);
+        List<Map<String, Object>> databases = inspectionEntityUtil.getDatabases();
+        for (Map<String, Object> database : databases) {
+            inspectionSingle(database, checker, time, date);
         }
         return results;
     }

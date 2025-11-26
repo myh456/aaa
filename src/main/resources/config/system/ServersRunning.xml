@@ -126,6 +126,10 @@
                 T.ACCOUNT_STATUS,
                 LOCK_DATE,
                 T.EXPIRY_DATE,
+                CASE
+                    WHEN T.EXPIRY_DATE IS NULL THEN NULL
+                    ELSE FLOOR(T.EXPIRY_DATE - SYSDATE)
+                END LAST_DAY,
                 CREATED,
                 PROFILE
             FROM
@@ -157,6 +161,10 @@
                     WHEN `PASSWORD_LIFETIME` IS NULL THEN ""
                     ELSE DATE_ADD(`PASSWORD_LAST_CHANGED`, INTERVAL `PASSWORD_LIFETIME` DAY)
                 END AS `EXPIRY_DATE`,
+                CASE
+                    WHEN `PASSWORD_LIFETIME` IS NULL THEN ''
+                    ELSE DATEDIFF(DATE_ADD(`PASSWORD_LAST_CHANGED`, INTERVAL `PASSWORD_LIFETIME` DAY), NOW())
+                END AS `LAST_DAY`,
                 '' AS `CREATED`,
                 '' AS `PROFILE`
             FROM
@@ -182,6 +190,7 @@
                 END AS ACCOUNT_STATUS,
                 '' AS LOCK_DATE,
                 '' AS EXPIRY_DATE,
+                '' AS LAST_DAY,
                 '' AS CREATED,
                 '' AS PROFILE
             FROM system.users
@@ -207,6 +216,11 @@
                         THEN TIMESTAMPADD('D', PF.PASSWORD_LIFE_TIME ::! INT, P.PASSWORD_CREATE_TIME)
                     ELSE NULL
                 END AS EXPIRY_DATE,
+                CASE
+                    WHEN PF.PASSWORD_LIFE_TIME ::! INT IS NOT NULL
+                        THEN DATEDIFF('D', NOW(), TIMESTAMPADD('D', PF.PASSWORD_LIFE_TIME ::! INT, P.PASSWORD_CREATE_TIME))
+                    ELSE NULL
+                END AS LAST_DAY,
                 '' AS CREATED,
                 '' AS PROFILE
             FROM V_CATALOG.USERS U
@@ -289,4 +303,15 @@
     <service-rk name="流水">
         <sql>select Host, Db, User from mysql.db</sql>
     </service-rk>
+
+<!--    <connectivity currentOS="linux">-->
+<!--        <shell>-->
+<!--            echo "{{address}}" | xargs -I {} curl -s -o /dev/null -w "{} %{http_code}" {} | awk '{print "{\"domain\": \"" $1 "\", \"status_code\": " $2 "}"}'-->
+<!--        </shell>-->
+<!--    </connectivity>-->
+<!--    <connectivity currentOS="win">-->
+<!--        <shell>-->
+<!--            '{{address}}' | ForEach-Object { $domain = $_; try { $code = (Invoke-WebRequest -Uri "http://$domain" -UseBasicParsing -MaximumRedirection 0 -ErrorAction Stop).StatusCode } catch { $code = $_.Exception.Response.StatusCode } Write-Output "{""domain"": ""$domain"", ""status_code"": $code}" }-->
+<!--        </shell>-->
+<!--    </connectivity>-->
 </root>

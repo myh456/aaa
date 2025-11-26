@@ -7,8 +7,11 @@
     <pub-key>
         MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjLqBUpyD1DsNQSeqmcrdSWLHdK3MKxa1kyqEXXSDsyyVwOVFspjJ/UmXvmlAO68qP1LiKEnduYnuFmDjPWnWu3/gmkxeyHZ4Lil7loqLDO7PfVCKPCSGBGAAJbY5enHevawYxj6zsw/EeAXRk+hvxtHDGcHCi41gfFmL9BXquY2YokUyynOj4+v3niehwbDnbPmSsR7ZnNZ+1w/6CVbx0Uuh8qzgwK159duti679nv4+qU2eMvcgdGc+BWeqUYm3wudAWkiEXVoI7zpRrsRZz8gsLqxmTyZqC/05bnz2KJPs+o33qklm7fFHoG+mjRLYkI7VlDTHP4TeY5zuQ/JGGwIDAQAB
     </pub-key>
-    <check>
+    <server-check>
         <cpu id="2"/>
         <memory id="1"/>
-    </check>
+    </server-check>
+    <database-check>
+
+    </database-check>
 </root>

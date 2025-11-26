@@ -36,11 +36,13 @@ public class InspectionEntityUtil {
     @Getter
     private Map<String, Object> defaultConfig;
     @Getter
-    private Map<String, Object> defaultCheck;
+    private Map<String, Object> defaultServerCheck;
     @Getter
-    private List<Object> servers;
+    private Map<String, Object> defaultDatabaseCheck;
     @Getter
-    private List<Object> databases;
+    private List<Map<String, Object>> servers;
+    @Getter
+    private List<Map<String, Object>> databases;
     @Getter
     private List<Object> excelConfigs;
 
@@ -118,315 +120,210 @@ public class InspectionEntityUtil {
         });
         // 默认配置
         Map<String, Object> defaultMap = xmlParser.parseXml(configPath + "DefaultConfig.xml");
-        defaultCheck = new HashMap<>();
+        defaultServerCheck = new HashMap<>();
+        defaultDatabaseCheck = new HashMap<>();
         defaultConfig = defaultMap;
-        Map<String, Object> checks = (Map<String, Object>) defaultMap.get("check");
-        defaultConfig.remove("check");
-        for (String k : checks.keySet()) {
-            if (((Map<String, Object>) checks.get(k)).containsKey("@id")) {
-                Map<String, Object> item = (Map<String, Object>) rules.get(k).get(Integer.parseInt(((Map<String, Object>) checks.get(k)).get("@id").toString()));
-                defaultCheck.put(k, item);
-            } else {
-                defaultCheck.put(k, checks.get(k));
+        if (defaultMap.containsKey("server-check") && !"".equals(defaultMap.get("server-check"))) {
+            Map<String, Object> checks = (Map<String, Object>) defaultMap.get("server-check");
+            defaultConfig.remove("server-check");
+            for (String k : checks.keySet()) {
+                if (((Map<String, Object>) checks.get(k)).containsKey("@id")) {
+                    Map<String, Object> item = (Map<String, Object>) rules.get(k).get(Integer.parseInt(((Map<String, Object>) checks.get(k)).get("@id").toString()));
+                    defaultServerCheck.put(k, item);
+                } else {
+                    defaultServerCheck.put(k, checks.get(k));
+                }
+            }
+        }
+        if (defaultMap.containsKey("database-check") && !"".equals(defaultMap.get("database-check"))) {
+            Map<String, Object> checks = (Map<String, Object>) defaultMap.get("database-check");
+            defaultConfig.remove("database-check");
+            for (String k : checks.keySet()) {
+                if (((Map<String, Object>) checks.get(k)).containsKey("@id")) {
+                    Map<String, Object> item = (Map<String, Object>) rules.get(k).get(Integer.parseInt(((Map<String, Object>) checks.get(k)).get("@id").toString()));
+                    defaultDatabaseCheck.put(k, item);
+                } else {
+                    defaultDatabaseCheck.put(k, checks.get(k));
+                }
             }
         }
     }
 
     @SuppressWarnings("unchecked")
+    private void loadConfiguration(String xmlPath, String rootKey, List<Map<String, Object>> targetList,
+                                   Map<String, Object> templatesMap, Map<String, Object> defaultCheck, String cmdKey) throws DocumentException {
+        Map<String, Object> xmlMap = xmlParser.parseXml(xmlPath);
+        List<Object> itemList = getAsList(xmlMap.get(rootKey));
+
+        for (Object item : itemList) {
+            Map<String, Object> rawConfig = (Map<String, Object>) item;
+            Map<String, Object> finalConfig = new HashMap<>();
+            boolean isDefault = true;
+
+            // 1. 基础属性复制与角色(character)继承
+            for (String k : rawConfig.keySet()) {
+                if (k.startsWith("@")) {
+                    finalConfig.put(k, rawConfig.get(k));
+                }
+                if ("character".equals(k)) {
+                    List<Object> charaList = getAsList(rawConfig.get(k));
+                    for (Object ch : charaList) {
+                        int id = Integer.parseInt(((Map<String, Object>) ch).get("@id").toString());
+                        // 使用了JSON序列化进行深拷贝。
+                        Map<String, Object> chara = deepCopyMap(charas.get(id));
+                        finalConfig.putAll(chara);
+                        isDefault = false;
+                    }
+                }
+            }
+
+            // 2. 默认配置处理
+            if (isDefault) {
+                finalConfig.putAll(defaultCheck);
+            }
+
+            // 3. 提取当前对象的上下文属性 (用于过滤和变量替换)
+            Map<String, Object> contextAttrs = new HashMap<>();
+            contextAttrs.put("@currentOS", currentOS);
+            finalConfig.forEach((k, v) -> {
+                if (k.startsWith("@")) contextAttrs.put(k, v);
+            });
+
+            // 4. 处理具体的检查项 (命令/SQL注入与变量替换)
+            // 使用临时Map避免遍历时修改异常，或者直接遍历Key
+            Map<String, Object> configCopy = new HashMap<>(finalConfig);
+            configCopy.forEach((k, v) -> {
+                if (k.startsWith("@")) return;
+
+                // 检查是否在模版源(cmds/sqls)中定义了该项
+                if (templatesMap.containsKey(k)) {
+                    processConfigItem(k, (Map<String, Object>) v, templatesMap.get(k), contextAttrs, cmdKey);
+                }
+            });
+
+            // 将处理后的 configCopy 重新赋值给 finalConfig (因为 processConfigItem 是引用修改)
+            // 实际上 finalConfig 中的 value 对象引用和 configCopy 是一样的，所以直接修改 v 即可生效
+
+            targetList.add(finalConfig);
+        }
+    }
+
+    /**
+     * 处理单个配置项：解析变量、合并模版、生成最终命令
+     */
+    @SuppressWarnings("unchecked")
+    private void processConfigItem(String key, Map<String, Object> itemValue, Object templateObj,
+                                   Map<String, Object> contextAttrs, String cmdKey) {
+
+        // A. 提取局部变量配置
+        Map<String, List<String>> singleVars = new HashMap<>();
+        List<Map<String, String>> multiVars = new ArrayList<>();
+
+        itemValue.forEach((k1, v1) -> {
+            if (k1.endsWith("-attr")) {
+                String attr = k1.substring(0, k1.length() - 5);
+                singleVars.put(attr, getAsStringList(v1));
+            } else if ("attrs".equals(k1)) {
+                List<Object> rawList = getAsList(v1);
+                rawList.forEach(item -> {
+                    if (item instanceof Map) {
+                        multiVars.add((Map<String, String>) item);
+                    }
+                });
+            }
+        });
+
+        // B. 合并模版内容
+        if (templateObj instanceof Map) {
+            itemValue.putAll((Map<String, Object>) templateObj);
+        } else if (templateObj instanceof List) {
+            // 根据属性过滤 List 类型的模版
+            Map<String, Object> matchedTemplate = ((List<Map<String, Object>>) templateObj).stream()
+                    .filter(c -> contextAttrs.entrySet().stream()
+                            .allMatch(attr -> !c.containsKey(attr.getKey()) ||
+                                    Objects.equals(c.get(attr.getKey()), attr.getValue())))
+                    .findFirst().orElse(null);
+
+            if (matchedTemplate == null) return;
+            itemValue.putAll(matchedTemplate);
+
+            // 将上下文属性反向补全到 itemValue
+            contextAttrs.forEach((ka, va) -> itemValue.putIfAbsent(ka, va));
+        }
+
+        // C. 生成最终命令 (变量替换)
+        Object rawCmd = itemValue.get(cmdKey);
+        if (rawCmd == null) return;
+        String cmdTemplate = rawCmd.toString();
+
+        if (!singleVars.isEmpty()) {
+            List<String> resultCmds = new ArrayList<>();
+            for (Map.Entry<String, List<String>> entry : singleVars.entrySet()) {
+                String varKey = "{{" + entry.getKey() + "}}";
+                if (cmdTemplate.contains(varKey)) {
+                    for (String val : entry.getValue()) {
+                        resultCmds.add(cmdTemplate.replace(varKey, val));
+                    }
+                }
+            }
+            if(!resultCmds.isEmpty()) itemValue.put(cmdKey, resultCmds);
+
+        } else if (!multiVars.isEmpty()) {
+            List<String> resultCmds = new ArrayList<>();
+            for (Map<String, String> vars : multiVars) {
+                String temp = cmdTemplate;
+                for (Map.Entry<String, String> entry : vars.entrySet()) {
+                    temp = temp.replace("{{" + entry.getKey() + "}}", entry.getValue());
+                }
+                resultCmds.add(temp);
+            }
+            itemValue.put(cmdKey, resultCmds);
+
+        } else {
+            // 尝试使用 contextAttrs 自动替换
+            String temp = cmdTemplate;
+            boolean modified = false;
+            for (String var : contextAttrs.keySet()) {
+                String target = "{{" + var + "}}";
+                if (temp.contains(target)) {
+                    temp = temp.replace(target, contextAttrs.get(var).toString());
+                    modified = true;
+                }
+            }
+            if (modified) itemValue.put(cmdKey, temp);
+        }
+    }
+
+    // --- 辅助工具方法 ---
+
+    // 统一处理 Object 转 List (处理单个对象和List对象的差异)
+    @SuppressWarnings("unchecked")
+    private List<Object> getAsList(Object obj) {
+        if (obj == null) return Collections.emptyList();
+        if (obj instanceof List) return (List<Object>) obj;
+        return new ArrayList<>(Collections.singletonList(obj));
+    }
+
+    // 统一处理 Object 转 List<String>
+    @SuppressWarnings("unchecked")
+    private List<String> getAsStringList(Object obj) {
+        if (obj instanceof List) return (List<String>) obj;
+        return Collections.singletonList(obj.toString());
+    }
+
+    // 深拷贝 (保留原逻辑中的 JSON 方式，虽然性能一般但最安全)
+    private Map<String, Object> deepCopyMap(Object source) {
+        return JSONObject.parseObject(JSON.toJSONString(source));
+    }
+
     public void initServer() throws DocumentException {
-        Map<String, Object> serversMap = xmlParser.parseXml(configPath + "ServersConfig.xml");
-        servers = new ArrayList<>();
-        List<Object> serverList;
-        if (serversMap.get("server") instanceof Map) {
-            serverList = Collections.singletonList(serversMap.get("server"));
-        } else {
-            serverList = (List<Object>) serversMap.get("server");
-        }
-        // 获取服务器信息
-        for (Object item : serverList) {
-            Map<String, Object> check = (Map<String, Object>) item;
-            Map<String, Object> server = new HashMap<>();
-            boolean isDefault = true;
-            for (String k : check.keySet()) {
-                if (k.startsWith("@")) {
-                    server.put(k, check.get(k));
-                }
-                if (!"character".equals(k)) {
-                    continue;
-                }
-                List<Object> charaList;
-                if (check.get(k) instanceof Map) {
-                    charaList = Collections.singletonList(check.get(k));
-                } else {
-                    charaList = (List<Object>) check.get(k);
-                }
-                for (Object ch : charaList) {
-                    int id = Integer.parseInt(((Map<String, Object>) ch).get("@id").toString());
-                    Map<String, Object> chara = JSONObject.parseObject(JSON.toJSONString(charas.get(id)));
-                    server.putAll(chara);
-                    isDefault = false;
-                }
-            }
-            if (isDefault) {
-                defaultCheck.forEach((k, v) -> {
-                    if (((Map<String, Object>) v).containsKey("cmd")) {
-                        server.put(k, v);
-                    }
-                });
-            }
-            // 获取服务器属性
-            Map<String, Object> attrs = new HashMap<>();
-            attrs.put("@currentOS", currentOS);
-            server.forEach((k, v) -> {
-                if (k.startsWith("@")) {
-                    attrs.put(k, v);
-                }
-            });
-            // 将命令插入服务器配置
-            server.forEach((k, v) -> {
-                if (k.startsWith("@")) {
-                    return;
-                }
-                if (cmds.containsKey(k)) {
-                    // 保存服务器配置的变量
-                    Map<String, List<String>> serverVars = new HashMap<>();
-                    List<Map<String, String>> serverMultiVars = new ArrayList<>();
-                    ((Map<String, Object>) v).forEach((k1, v1) -> {
-                        if (k1.endsWith("-attr")) {
-                            String attr = k1.substring(0, k1.length() - 5);
-                            if (v1 instanceof List) {
-                                serverVars.put(attr, (List<String>) v1);
-                            } else {
-                                serverVars.put(attr, Collections.singletonList(v1.toString()));
-                            }
-                        } else if ("attrs".equals(k1)) {
-                            if (v1 instanceof List) {
-                                serverMultiVars.addAll((List<Map<String, String>>) v1);
-                            } else {
-                                serverMultiVars.add((Map<String, String>) v1);
-                            }
-                        }
-                    });
-                    // 获取并插入命令
-                    Object cmd = cmds.get(k);
-                    if (cmd instanceof Map) {
-                        ((Map<String, Object>) v).putAll((Map<String, Object>) cmd);
-                    } else {
-                        // 根据attrs进行过滤，取出attrs和cmd中相同的键，值相同的命令
-                        Map<String, Object> cc = ((List<Map<String, Object>>) cmd).stream()
-                                .filter(c -> attrs.entrySet().stream()
-                                        .allMatch(attr ->
-                                                !c.containsKey(attr.getKey()) ||
-                                                        Objects.equals(c.get(attr.getKey()), attr.getValue())
-                                        ))
-                                .findFirst()
-                                .orElse(null);
-                        if (cc == null) {
-                            return;
-                        }
-                        ((Map<String, Object>) v).putAll(cc);
-                        // 将服务器属性继承到巡检项
-                        for(String ka: attrs.keySet()) {
-                            if(!((Map<String, Object>) v).containsKey(ka)) {
-                                ((Map<String, Object>) v).put(ka, attrs.get(ka));
-                            }
-                        }
-                    }
-                    // 根据变量生成cmd数组
-                    if (!serverVars.isEmpty()) {
-                        cmd = ((Map<String, Object>) v).get("cmd").toString();
-                        List<String> cmds = new ArrayList<>();
-                        for (String var : serverVars.keySet()) {
-                            if (cmd.toString().contains(String.format("{{%s}}", var))) {
-                                for (String val : serverVars.get(var)) {
-                                    cmds.add(cmd.toString().replace(String.format("{{%s}}", var), val));
-                                }
-                            }
-                        }
-                        ((Map<String, Object>) v).put("cmd", cmds);
-                    } else if (!serverMultiVars.isEmpty()) {
-                        cmd = ((Map<String, Object>) v).get("cmd").toString();
-                        List<String> cmds = new ArrayList<>();
-                        for (Map<String, String> vars : serverMultiVars) {
-                            String cmdTemp = cmd.toString();
-                            for (Map.Entry<String, String> varsEntry : vars.entrySet()) {
-                                String var = varsEntry.getKey();
-                                String val = varsEntry.getValue();
-                                if (cmd.toString().contains(String.format("{{%s}}", var))) {
-                                    cmdTemp = cmdTemp.replace(String.format("{{%s}}", var), val);
-                                }
-                            }
-                            cmds.add(cmdTemp);
-                        }
-                        ((Map<String, Object>) v).put("cmd", cmds);
-                    } else {
-                        // 判断命令中是否设置变量，尝试使用已有属性自动赋值
-                        cmd = ((Map<String, Object>) v).get("cmd").toString();
-                        String pattern = "\\{\\{.*?}}";
-                        Pattern p = Pattern.compile(pattern);
-                        Matcher m = p.matcher(cmd.toString());
-                        if (m.find()) {
-                            for(String var: attrs.keySet()) {
-                                if (cmd.toString().contains(String.format("{{%s}}", var))) {
-                                    cmd = cmd.toString().replace(String.format("{{%s}}", var), attrs.get(var).toString());
-                                }
-                            }
-                            ((Map<String, Object>) v).put("cmd", cmd);
-                        }
-                    }
-                }
-            });
-            servers.add(server);
-        }
+        this.servers = new ArrayList<>();
+        loadConfiguration(configPath + "ServersConfig.xml", "server", this.servers, this.cmds, this.defaultServerCheck, "cmd");
     }
 
-    @SuppressWarnings("unchecked")
     public void initDatabase() throws DocumentException {
-        Map<String, Object> databaseMap = xmlParser.parseXml(configPath + "DatabaseConfig.xml");
-        databases = new ArrayList<>();
-        List<Object> databaseList;
-        if (databaseMap.get("database") instanceof Map) {
-            databaseList = Collections.singletonList(databaseMap.get("database"));
-        } else {
-            databaseList = (List<Object>) databaseMap.get("database");
-        }
-        for (Object item : databaseList) {
-            Map<String, Object> check = (Map<String, Object>) item;
-            Map<String, Object> database = new HashMap<>();
-            boolean isDefault = true;
-            for (String k : check.keySet()) {
-                if (k.startsWith("@")) {
-                    database.put(k, check.get(k));
-                }
-                if (!"character".equals(k)) {
-                    continue;
-                }
-                List<Object> charaList;
-                if (check.get(k) instanceof Map) {
-                    charaList = Collections.singletonList(check.get(k));
-                } else {
-                    charaList = (List<Object>) check.get(k);
-                }
-                for (Object ch : charaList) {
-                    int id = Integer.parseInt(((Map<String, Object>) ch).get("@id").toString());
-                    Map<String, Object> chara = JSONObject.parseObject(JSON.toJSONString(charas.get(id)));
-                    database.putAll(chara);
-                    isDefault = false;
-                }
-            }
-            if (isDefault) {
-                defaultCheck.forEach((k, v) -> {
-                    if (((Map<String, Object>) v).containsKey("sql")) {
-                        database.put(k, v);
-                    }
-                });
-            }
-            // 获取数据库属性
-            Map<String, Object> attrs = new HashMap<>();
-            attrs.put("@currentOS", currentOS);
-            database.forEach((k, v) -> {
-                if (k.startsWith("@")) {
-                    attrs.put(k, v);
-                }
-            });
-            // 将sql插入数据库配置
-            database.forEach((k, v) -> {
-                if (k.startsWith("@")) {
-                    return;
-                }
-                if(sqls.containsKey(k)) {
-                    // 保存数据库配置的变量
-                    Map<String, List<String>> databaseVars = new HashMap<>();
-                    List<Map<String, String>> databaseMultiVars = new ArrayList<>();
-                    ((Map<String, Object>) v).forEach((k1, v1) -> {
-                        if (k1.endsWith("-attr")) {
-                            String attr = k1.substring(0, k1.length() - 5);
-                            if (v1 instanceof List) {
-                                databaseVars.put(attr, (List<String>) v1);
-                            } else {
-                                databaseVars.put(attr, Collections.singletonList(v1.toString()));
-                            }
-                        } else if ("attrs".equals(k1)) {
-                            if (v1 instanceof List) {
-                                databaseMultiVars.addAll((List<Map<String, String>>) v1);
-                            } else {
-                                databaseMultiVars.add((Map<String, String>) v1);
-                            }
-                        }
-                    });
-                    // 获取并插入命令
-                    Object sql = sqls.get(k);
-                    if (sql instanceof Map) {
-                        ((Map<String, Object>) v).putAll((Map<String, Object>) sql);
-                    } else {
-                        // 根据attrs进行过滤，取出attrs和cmd中相同的键，值相同的命令
-                        Map<String, Object> ss = ((List<Map<String, Object>>) sql).stream()
-                                .filter(c -> attrs.entrySet().stream()
-                                        .allMatch(attr ->
-                                                !c.containsKey(attr.getKey()) ||
-                                                        Objects.equals(c.get(attr.getKey()), attr.getValue())
-                                        ))
-                                .findFirst()
-                                .orElse(null);
-                        if (ss == null) {
-                            return;
-                        }
-                        ((Map<String, Object>) v).putAll(ss);
-                        // 将数据库属性继承到巡检项
-                        for(String ka: attrs.keySet()) {
-                            if(!((Map<String, Object>) v).containsKey(ka)) {
-                                ((Map<String, Object>) v).put(ka, attrs.get(ka));
-                            }
-                        }
-                        // 根据变量生成sql数组
-                        if (!databaseVars.isEmpty()) {
-                            sql = ((Map<String, Object>) v).get("sql").toString();
-                            List<String> sqls = new ArrayList<>();
-                            for (String var : databaseVars.keySet()) {
-                                if (sql.toString().contains(String.format("{{%s}}", var))) {
-                                    for (String val : databaseVars.get(var)) {
-                                        sqls.add(sql.toString().replace(String.format("{{%s}}", var), val));
-                                    }
-                                }
-                            }
-                            ((Map<String, Object>) v).put("sql", sqls);
-                        } else if (!databaseMultiVars.isEmpty()) {
-                            sql = ((Map<String, Object>) v).get("sql").toString();
-                            if (!databaseMultiVars.isEmpty()) {
-                                List<String> sqls = new ArrayList<>();
-                                for (Map<String, String> vars : databaseMultiVars) {
-                                    String sqlTemp = sql.toString();
-                                    for(Map.Entry<String, String> varsEntry : vars.entrySet()) {
-                                        String var = varsEntry.getKey();
-                                        String val = varsEntry.getValue();
-                                        if(sql.toString().contains(String.format("{{%s}}", var))) {
-                                            sqlTemp = sqlTemp.replace(String.format("{{%s}}", var), val);
-                                        }
-                                    }
-                                    sqls.add(sqlTemp);
-                                }
-                                ((Map<String, Object>) v).put("sql", sqls);
-                            }
-                        } else {
-                            // 判断命令中是否设置变量，尝试使用已有属性自动赋值
-                            sql = ((Map<String, Object>) v).get("sql");
-                            String pattern = "\\{\\{.*?}}";
-                            Pattern p = Pattern.compile(pattern);
-                            Matcher m = p.matcher(sql.toString());
-                            if (m.find()) {
-                                for(String var: attrs.keySet()) {
-                                    if (sql.toString().contains(String.format("{{%s}}", var))) {
-                                        sql = sql.toString().replace(String.format("{{%s}}", var), attrs.get(var).toString());
-                                    }
-                                }
-                                ((Map<String, Object>) v).put("sql", sql);
-                            }
-                        }
-                    }
-                }
-            });
-            databases.add(database);
-        }
+        this.databases = new ArrayList<>();
+        loadConfiguration(configPath + "DatabaseConfig.xml", "database", this.databases, this.sqls, this.defaultDatabaseCheck, "sql");
     }
 
 

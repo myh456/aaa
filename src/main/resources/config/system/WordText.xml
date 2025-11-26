@@ -88,7 +88,14 @@
         <extract key="ip" val="username"/>
         <subtitle>用户密码过期巡检结果</subtitle>
         <text>
-            本次共检查{{total}}位用户
+            本次共检查{{total}}位用户，{{normal}}位正常，{{over_size}}位超过阈值
+            <if notzero="over_size">
+                ，分别为
+                <foreach from="over">
+                    {{key}}数据库下的{{val}}用户
+                </foreach>
+                需要重点关注。
+            </if>
         </text>
     </section>
 </word>
