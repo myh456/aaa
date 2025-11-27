@@ -25,9 +25,9 @@
         <extract key="ip"/>
         <subtitle>内存巡检结果</subtitle>
         <text>
-            本次共检查{{total}}台服务器，{{normal}}台正常，{{failed_size}}台连接不上未能巡检
+            本次共检查{{total}}台服务器，{{normal}}台正常，{{failed_size}}台连接不上未能巡检，
             <if notzero="failed_size">
-                ，分别为
+                分别为
                 <foreach from="failed" begin="" end="，" separator="、">
                     {{key}}
                 </foreach>
@@ -57,21 +57,14 @@
         </text>
     </section>
     <section for="ogg">
-        <extract key="ip"/>
+        <extract key="ip" val="group"/>
         <subtitle>OGG巡检结果</subtitle>
         <text>
-            本次共检查{{total}}台服务器，{{normal}}台正常，{{failed_size}}台连接不上未能巡检
-            <if notzero="failed_size">
-                ，分别为
-                <foreach from="failed" begin="" end="，" separator="、">
-                    {{key}}
-                </foreach>
-            </if>
-            {{over_size}}台超过阈值
+            本次共检查{{total}}项OGG，{{normal}}项正常，{{over_size}}项超过阈值
             <if notzero="over_size">
                 ，分别为
                 <foreach from="over" begin="" end="，" separator="、">
-                    {{key}}
+                    {{key}}下的{{val}}进程组
                 </foreach>
                 需要重点关注。
             </if>
@@ -93,6 +86,20 @@
                 ，分别为
                 <foreach from="over">
                     {{key}}数据库下的{{val}}用户
+                </foreach>
+                需要重点关注。
+            </if>
+        </text>
+    </section>
+    <section for="tablespace">
+        <extract key="ip" val="tablespace"/>
+        <subtitle>表空间巡检结果</subtitle>
+        <text>
+            本次共检查{{total}}个表空间，{{normal}}个正常，{{over_size}}个超过阈值
+            <if notzero="over_size">
+                ，分别为
+                <foreach from="over">
+                    {{key}}数据库下的{{val}}表空间
                 </foreach>
                 需要重点关注。
             </if>

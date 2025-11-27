@@ -21,52 +21,119 @@
                 服务器内存巡检结果
             </title>
             <row>
+                <cell from="ip" name="服务器IP" width="15"/>
+                <cell from="port" name="端口" width="10"/>
                 <cell from="name" name="服务器名称" width="20"/>
-                <cell from="ip" name="IP" width="15"/>
-                <cell from="us" name="内存使用率us" width="15"/>
+                <cell from="mem_used" name="物理内存使用" width="15"/>
+                <cell from="mem_free" name="物理内存剩余" width="15"/>
+                <cell from="free_used" name="虚拟内存使用" width="15"/>
+                <cell from="free_free" name="虚拟内存剩余" width="15"/>
             </row>
         </table>
     </sheet>
-    <sheet name="业务量">
-        <table for="service-sb">
+    <sheet name="服务器目录巡检">
+        <table for="storage">
             <title>
-                业务量1
+                服务器目录巡检结果
             </title>
             <row>
-                <cell from="Host" name="A数量" width="15"/>
-                <cell from="Db" name="B数量" width="15"/>
-                <cell from="User" name="C数量" width="15"/>
-            </row>
-        </table>
-        <table for="service-rk">
-            <title>
-                业务量2
-            </title>
-            <row>
-                <cell from="Host" name="D数量" width="15"/>
-                <cell from="Db" name="E数量" width="15"/>
-                <cell from="User" name="F数量" width="15"/>
-                <cell name="G数量">
-                    <cell from="g1" name="G1数量" width="15"/>
-                    <cell from="g2" name="G2数量" width="15"/>
-                </cell>
-                <cell name="M数量">
-                    <cell from="m1" name="m1数量" width="15"/>
-                    <cell from="m2" name="m2数量" width="15"/>
-                </cell>
-            </row>
-        </table>
-        <table for="service-zt">
-            <title>
-                业务量3
-            </title>
-            <row>
-                <cell from="Host" name="H数量" width="15"/>
-                <cell from="Db" name="I数量" width="15"/>
-                <cell from="User" name="J数量" width="15"/>
-                <cell from="K" name="K数量" width="15"/>
-                <cell from="L" name="L数量" width="15"/>
+                <cell from="ip" name="服务器IP" width="15"/>
+                <cell from="port" name="端口" width="10"/>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="dir" name="目录" width="15"/>
+                <cell from="size" name="总大小" width="15"/>
+                <cell from="used" name="已使用大小" width="15"/>
+                <cell from="avail" name="可用大小" width="15"/>
+                <cell from="use" name="使用率" width="15"/>
             </row>
         </table>
     </sheet>
+    <sheet name="连通性检查">
+        <table for="connectivity">
+            <title>
+                连通性检查结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="address" name="地址" width="20"/>
+                <cell from="status" name="响应状态" width="15"/>
+            </row>
+        </table>
+    </sheet>
+    <sheet name="过期时间">
+        <table for="expire">
+            <title>
+                过期时间巡检结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="ip" name="IP" width="20"/>
+                <cell from="type" name="数据库类型" width="20"/>
+                <cell from="username" name="用户名" width="25"/>
+                <cell from="account_status" name="用户状态" width="30"/>
+                <cell from="created" name="创建时间" width="25"/>
+                <cell from="expiry_date" name="过期时间" width="25"/>
+                <cell from="last_day" name="剩余天数" width="10"/>
+            </row>
+        </table>
+    </sheet>
+    <sheet name="表空间">
+        <table for="tablespace">
+            <title>
+                表空间巡检结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="ip" name="IP" width="20"/>
+                <cell from="username" name="用户名" width="20"/>
+                <cell from="tablespacename" name="表空间名称" width="20"/>
+                <cell from="total" name="表空间" width="25"/>
+                <cell from="maxtotal" name="最大表空间" width="25"/>
+                <cell from="used" name="已使用" width="25"/>
+                <cell from="usedpct" name="已使用百分比" width="20"/>
+                <cell from="maxusedpct" name="最大使用百分比" width="25"/>
+            </row>
+        </table>
+    </sheet>
+    <sheet name="ASM">
+        <table for="asm">
+            <title>
+                ASM巡检结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="ip" name="IP" width="20"/>
+                <cell from="asmname" name="asm名称" width="20"/>
+                <cell from="total_mb" name="总大小" width="20"/>
+                <cell from="free_mb" name="剩余大小" width="20"/>
+                <cell from="use" name="使用大小" width="20"/>
+            </row>
+        </table>
+    </sheet>
+    <sheet name="数据库实例">
+        <table for="instance">
+            <title>
+                数据库实例巡检结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="ip" name="IP" width="20"/>
+                <cell from="type" name="数据库类型" width="20"/>
+                <cell from="username" name="用户名" width="20"/>
+                <cell from="instancename" name="实例名" width="20"/>
+                <cell from="status" name="数据库状态" width="20"/>
+            </row>
+        </table>
+    </sheet>
+    <!--<sheet name="weblogic进程">
+        <table for="weblogic-process">
+            <title>
+                weblogic进程巡检结果
+            </title>
+            <row>
+                <cell from="name" name="服务器名称" width="20"/>
+                <cell from="ip" name="IP" width="20"/>
+            </row>
+        </table>
+    </sheet>-->
 </excel>

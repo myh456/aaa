@@ -234,7 +234,7 @@
     <asm type="oracle">
         <sql>
             SELECT
-                NAME,
+                NAME ASMNAME,
                 TOTAL_MB,
                 FREE_MB,
                 CASE
@@ -306,7 +306,7 @@
 
     <connectivity currentOS="linux">
         <shell>
-            echo "{{address}}" | xargs -I {} curl -s -o /dev/null -w "{} %{http_code}" {} | awk '{print "{\"address\": \"" $1 "\", \"status\": " $2 "}"}'
+            echo "{{address}}" | while read url; do; curl -s -o /dev/null -w "{\"address\": \"$url\", \"status\": %{http_code}}\n" "$url"; done
         </shell>
     </connectivity>
     <connectivity currentOS="win">

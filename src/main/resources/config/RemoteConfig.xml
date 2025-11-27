@@ -2,4 +2,16 @@
     <remote address="www.baidu.com" name="百度">
         <character id="7"/>
     </remote>
+    <remote address="www.google.com" name="谷歌">
+        <character id="7"/>
+    </remote>
+    <remote address="www.a.com" name="未知网站">
+        <character id="7"/>
+    </remote>
+    <remote address="www.sohu.com" name="搜狐">
+        <character id="7"/>
+    </remote>
+    <remote address="www.baidu.com/a.txt" name="报404的网址">
+        <character id="7"/>
+    </remote>
 </root>
